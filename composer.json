@@ -1,0 +1,26 @@
+{
+  "name": "e-kevin/engine-core",
+  "description": "基于php Yii2开发的一款优秀的极度重视二次开发和高可定制以及易于扩展的开源框架核心",
+  "keywords": [
+    "yii2",
+    "frame"
+  ],
+  "authors": [
+    {
+      "name": "E-Kevin",
+      "email": "e-kevin@qq.com"
+    }
+  ],
+  "license": "BSD-3-Clause",
+  "homepage": "https://github.com/e-kevin/engine-core",
+  "require": {
+    "php": ">=7.0",
+    "yiisoft/yii2": "~2.0.12",
+    "rmrevin/yii2-fontawesome": "~2.9"
+  },
+  "autoload": {
+    "psr-4": {
+      "EngineCore\\": "src"
+    }
+  }
+}
