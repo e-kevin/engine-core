@@ -1,22 +1,72 @@
 <?php
+/**
+ * @link https://github.com/e-kevin/engine-core
+ * @copyright Copyright (c) 2020 E-Kevin
+ * @license BSD 3-Clause License
+ */
 
-namespace EngineCore\services\extension\repository\configuration;
+namespace EngineCore\extension\repository\configuration;
 
-use DateTime;
+use yii\base\BaseObject;
 
 /**
  * 扩展配置格式类
+ *
+ * @property string             $vendorDir
+ * @property string             $name
+ * @property string             $type
+ * @property string             $description
+ * @property string             $version
+ * @property array              $keywords
+ * @property string             $homepage
+ * @property Author[]           $authors
+ * @property SupportInformation $support
+ * @property array              $composerDependencies
+ * @property array              $composerDevDependencies
+ * @property array              $suggest
+ * @property array              $autoloadPsr0
+ * @property array              $autoloadPsr4
+ * @property array              $repositories
+ * @property array              $extra
+ * @property array              $extraConfig
+ * @property array              $app
+ * @property array              $extensionDependencies
+ *
+ * @author            E-Kevin <e-kevin@qq.com>
  */
-class Configuration
+class Configuration extends BaseObject
 {
-    /**
-     * The separator used to divide the package name into vendor name and
-     * project name.
-     */
+    
     const NAME_SEPARATOR = '/';
     
+    /**
+     * Configuration constructor.
+     *
+     * @param string                  $vendorDir
+     * @param string                  $name
+     * @param string|null             $type
+     * @param string|null             $description
+     * @param string|null             $version
+     * @param array|null              $keywords
+     * @param string                  $homepage
+     * @param Author[]|null           $authors
+     * @param SupportInformation|null $support
+     * @param array|null              $dependencies
+     * @param array|null              $devDependencies
+     * @param array|null              $suggest
+     * @param array|null              $autoloadPsr0
+     * @param array|null              $autoloadPsr4
+     * @param array|null              $repositories
+     * @param mixed                   $extra
+     * @param array                   $config
+     *
+     * @throws UndefinedPropertyException
+     * @author E-Kevin <e-kevin@qq.com>
+     */
     public function __construct(
-        $name = null,
+        $vendorDir,
+        $name,
+        $type = null,
         $description = null,
         $version = null,
         array $keywords = null,
@@ -26,9 +76,21 @@ class Configuration
         array $dependencies = null,
         array $devDependencies = null,
         array $suggest = null,
+        array $autoloadPsr0 = null,
         array $autoloadPsr4 = null,
-        array $repositories = null
+        array $repositories = null,
+        $extra = null,
+        array $config = []
     ) {
+        if (null === $vendorDir || empty($vendorDir)) {
+            throw new UndefinedPropertyException('vendorDir');
+        }
+        if (null === $name || empty($name)) {
+            throw new UndefinedPropertyException('name');
+        }
+        if (null === $type) {
+            $type = 'library';
+        }
         if (null === $keywords) {
             $keywords = [];
         }
@@ -50,14 +112,18 @@ class Configuration
         if (null === $autoloadPsr4) {
             $autoloadPsr4 = [];
         }
+        if (null === $autoloadPsr0) {
+            $autoloadPsr0 = [];
+        }
         if (null === $repositories) {
             $repositories = [];
         }
         
+        $this->_vendorDir = $vendorDir;
         $this->_name = $name;
         $this->_description = $description;
         $this->_version = $version;
-        $this->_type = 'ec-extension';
+        $this->_type = $type;
         $this->_keywords = $keywords;
         $this->_homepage = $homepage;
         $this->_authors = $authors;
@@ -65,28 +131,42 @@ class Configuration
         $this->_dependencies = $dependencies;
         $this->_devDependencies = $devDependencies;
         $this->_suggest = $suggest;
+        $this->_autoloadPsr0 = $autoloadPsr0;
         $this->_autoloadPsr4 = $autoloadPsr4;
         $this->_repositories = $repositories;
+        $this->_extra = $extra;
+        
+        parent::__construct($config);
     }
     
     /**
-     * Get the package name, including vendor and project names.
+     * 获取扩展开发目录
      *
-     * @return string|null The name.
+     * @return string
      */
-    public function name()
+    public function getVendorDir()
+    {
+        return $this->_vendorDir;
+    }
+    
+    /**
+     * 获取完整扩展名，包括开发者名和扩展名
+     *
+     * @return string
+     */
+    public function getName()
     {
         return $this->_name;
     }
     
     /**
-     * Get the project name, without the vendor prefix.
+     * 获取扩展名
      *
-     * @return string|null The project name.
+     * @return string
      */
-    public function projectName()
+    public function getProjectName()
     {
-        $name = $this->_name();
+        $name = $this->getName();
         if (null === $name) {
             return null;
         }
@@ -97,13 +177,13 @@ class Configuration
     }
     
     /**
-     * Get the vendor name, without the project suffix.
+     * 获取开发者名
      *
-     * @return string|null The vendor name.
+     * @return string
      */
-    public function vendorName()
+    public function getVendorName()
     {
-        $name = $this->_name();
+        $name = $this->getName();
         if (null === $name) {
             return null;
         }
@@ -118,396 +198,235 @@ class Configuration
     }
     
     /**
-     * Get the package description.
+     * 获取描述
      *
-     * @return string|null The description.
+     * @return string
      */
-    public function description()
+    public function getDescription()
     {
         return $this->_description;
     }
     
     /**
-     * Get the package version.
+     * 获取版本
      *
-     * @return string|null The version.
+     * @return string
      */
-    public function version()
+    public function getVersion()
     {
         return $this->_version;
     }
     
     /**
-     * Get the package type.
+     * 获取扩展类型
      *
-     * @return string The type.
+     * @return string
      */
-    public function type()
+    public function getType()
     {
         return $this->_type;
     }
     
     /**
-     * Get the package keywords.
+     * 获取关键词
      *
-     * @return array<integer,string> The keywords.
+     * @return array
      */
-    public function keywords()
+    public function getKeywords()
     {
         return $this->_keywords;
     }
     
     /**
-     * Get the URI of the package's home page.
+     * 获取主页
      *
-     * @return string|null The home page.
+     * @return string
      */
-    public function homepage()
+    public function getHomepage()
     {
         return $this->_homepage;
     }
     
     /**
-     * Get the release date of this version.
+     * 获取作者
      *
-     * @return DateTime|null The release date.
+     * @return Author[]
      */
-    public function time()
-    {
-        return $this->_time;
-    }
-    
-    /**
-     * Get the licences the package is released under.
-     *
-     * @return array<integer,string>|null The licences.
-     */
-    public function license()
-    {
-        return $this->_license;
-    }
-    
-    /**
-     * Get the authors of the package.
-     *
-     * @return array<integer,Author> The authors.
-     */
-    public function authors()
+    public function getAuthors()
     {
         return $this->_authors;
     }
     
     /**
-     * Get support information for the package.
+     * 获取PSR-0
      *
-     * @return SupportInformation The support information.
+     * @return array
      */
-    public function support()
-    {
-        return $this->_support;
-    }
-    
-    /**
-     * Get the package's dependencies, excluding development dependencies.
-     *
-     * @return array<string,string> The dependencies.
-     */
-    public function dependencies()
-    {
-        return $this->_dependencies;
-    }
-    
-    /**
-     * Get the package's development dependencies.
-     *
-     * @return array<string,string> The development dependencies.
-     */
-    public function devDependencies()
-    {
-        return $this->_devDependencies;
-    }
-    
-    /**
-     * Get all of the package's dependencies, including development, and
-     * non-development dependencies.
-     *
-     * @return array<string,string> All dependencies.
-     */
-    public function allDependencies()
-    {
-        return array_merge(
-            $this->dependencies(),
-            $this->devDependencies()
-        );
-    }
-    
-    /**
-     * Get the packages that conflict with this version of the package.
-     *
-     * @return array<string,string> The conflicting packages.
-     */
-    public function conflict()
-    {
-        return $this->_conflict;
-    }
-    
-    /**
-     * Get the packages that are replaced by this package.
-     *
-     * @return array<string,string> The replaced packages.
-     */
-    public function replace()
-    {
-        return $this->_replace;
-    }
-    
-    /**
-     * Get the packages that are provided by this package.
-     *
-     * @return array<string,string> The provided packages.
-     */
-    public function provide()
-    {
-        return $this->_provide;
-    }
-    
-    /**
-     * Get suggested packages for use with this package.
-     *
-     * @return array<string,string> The suggested packages.
-     */
-    public function suggest()
-    {
-        return $this->_suggest;
-    }
-    
-    /**
-     * Get the PSR-4 autoloading configuration for the package.
-     *
-     * @return array<string,array<integer,string>> The PSR-4 autoloading configuration.
-     */
-    public function autoloadPsr4()
-    {
-        return $this->_autoloadPsr4;
-    }
-    
-    /**
-     * Get the PSR-0 autoloading configuration for the package.
-     *
-     * @return array<string,array<integer,string>> The PSR-0 autoloading configuration.
-     */
-    public function autoloadPsr0()
+    public function getAutoloadPsr0()
     {
         return $this->_autoloadPsr0;
     }
     
     /**
-     * Get the class map autoloading configuration for the package.
+     * 获取PSR-4
      *
-     * @return array<integer,string> The class map autoloading configuration.
+     * @return array
      */
-    public function autoloadClassmap()
+    public function getAutoloadPsr4()
     {
-        return $this->_autoloadClassmap;
+        return $this->_autoloadPsr4;
     }
     
     /**
-     * Get the file autoloading configuration for the package.
+     * 获取支持相关数据
      *
-     * @return array<integer,string> The file autoloading configuration for the package.
+     * @return SupportInformation
      */
-    public function autoloadFiles()
+    public function getSupport()
     {
-        return $this->_autoloadFiles;
+        return $this->_support;
     }
     
     /**
-     * Get the include path autoloading configuration for the package.
+     * 获取composer依赖包
      *
-     * @return array<integer,string> The include path autoloading configuration for the package.
+     * @return array
      */
-    public function includePath()
+    public function getComposerDependencies()
     {
-        return $this->_includePath;
+        return $this->_dependencies;
     }
     
     /**
-     * Get an array of all source paths containing PSR-4 conformant code.
+     * 获取composer开发依赖包
      *
-     * @return array<integer,string> The PSR-4 source paths.
+     * @return array
      */
-    public function allPsr4SourcePaths()
+    public function getComposerDevDependencies()
     {
-        $autoloadPsr4Paths = [];
-        foreach ($this->autoloadPsr4() as $namespace => $paths) {
-            $autoloadPsr4Paths = array_merge($autoloadPsr4Paths, $paths);
-        }
-        
-        return $autoloadPsr4Paths;
+        return $this->_devDependencies;
     }
     
     /**
-     * Get an array of all source paths containing PSR-0 conformant code.
+     * 获取建议信息
      *
-     * @return array<integer,string> The PSR-0 source paths.
+     * @return array
      */
-    public function allPsr0SourcePaths()
+    public function getSuggest()
     {
-        $autoloadPsr0Paths = [];
-        foreach ($this->autoloadPsr0() as $namespace => $paths) {
-            $autoloadPsr0Paths = array_merge($autoloadPsr0Paths, $paths);
-        }
-        
-        return $autoloadPsr0Paths;
+        return $this->_suggest;
     }
     
     /**
-     * Get an array of all source paths for this package.
+     * 获取资源库
      *
-     * @return array<integer,string> All source paths.
+     * @return array
      */
-    public function allSourcePaths()
-    {
-        return array_merge(
-            $this->allPsr4SourcePaths(),
-            $this->allPsr0SourcePaths(),
-            $this->autoloadClassmap(),
-            $this->autoloadFiles(),
-            $this->includePath()
-        );
-    }
-    
-    /**
-     * Get the target directory for installation.
-     *
-     * @return string|null The target directory.
-     */
-    public function targetDir()
-    {
-        return $this->_targetDir;
-    }
-    
-    /**
-     * Get the minimum stability for packages.
-     *
-     * @return Stability The minimum stability.
-     */
-    public function minimumStability()
-    {
-        return $this->_minimumStability;
-    }
-    
-    /**
-     * Returns true if stable packages should take precedence.
-     *
-     * @return boolean True if stable packages should take precedence.
-     */
-    public function preferStable()
-    {
-        return $this->_preferStable;
-    }
-    
-    /**
-     * Get the custom repositories used by this package.
-     *
-     * @return array<integer,RepositoryInterface> The custom repositories.
-     */
-    public function repositories()
+    public function getRepositories()
     {
         return $this->_repositories;
     }
     
     /**
-     * Get the configuration options for the package that are specific to
-     * project-type repositories.
+     * 获取额外数据
      *
-     * @return ProjectConfiguration The project configuration.
+     * @return mixed
      */
-    public function config()
-    {
-        return $this->_config;
-    }
-    
-    /**
-     * Get the hook scripts for the package.
-     *
-     * @return ScriptConfiguration The hook scripts.
-     */
-    public function scripts()
-    {
-        return $this->_scripts;
-    }
-    
-    /**
-     * Get the arbitrary extra data contained in the project's configuration.
-     *
-     * @return mixed The extra data.
-     */
-    public function extra()
+    public function getExtra()
     {
         return $this->_extra;
     }
     
     /**
-     * Get the binary executable files provided by the package.
+     * 获取扩展额外配置数据
      *
-     * @return array<integer,string> The executable files.
+     * @return array
      */
-    public function bin()
+    public function getExtraConfig()
     {
-        return $this->_bin;
+        return $this->getExtra()[ConfigurationFinderInterface::EXTENSION_CONFIGURATION_KEY] ?? [];
     }
     
     /**
-     * Get the archive configuration for the package.
+     * 获取所属应用，属于多个应用时，代表可以安装到这几个应用当中。
      *
-     * @return ArchiveConfiguration The archive configuration.
+     * @return array
      */
-    public function archive()
+    public function getApp()
     {
-        return $this->_archive;
+        if (null === $this->_app) {
+            $this->_app = (array)($this->getExtraConfig()['app'] ?? 'common');
+            // 如果扩展所属应用包含公共应用，则该扩展直接被视为公共扩展
+            if (in_array('common', $this->_app)) {
+                $this->_app = ['common'];
+            }
+        }
+        
+        return $this->_app;
     }
     
     /**
-     * Get the raw configuration data.
+     * 获取扩展依赖数据
      *
-     * @return mixed The raw configuration data.
+     * @return array
      */
-    public function rawData()
+    public function getExtensionDependencies()
     {
-        return $this->_rawData;
+        $dependencies = [];
+        $require = $this->getExtraConfig()['require'] ?? [];
+        foreach ($require as $app => $value) {
+            // 只获取在可安装的应用列表中的依赖数据
+            if (in_array($app, $this->getApp())) {
+                foreach ($value as $uniqueName => $row) {
+                    // "engine-core/theme-bootstrap-v3": "*"
+                    if (is_string($row)) {
+                        $dependencies[$app][$uniqueName] = [
+                            'app'     => $app,
+                            'version' => $row,
+                        ];
+                    } else {
+                        /*
+                         * "engine-core/theme-bootstrap-v3": {
+                         *  "app": "backend",
+                         * }
+                         */
+                        if (!isset($row['version'])) {
+                            $row['version'] = '*'; // 没有指定版本，即任意版本均可
+                        }
+                        /*
+                         * "engine-core/theme-bootstrap-v3": {
+                         *  "version": "*",
+                         * }
+                         */
+                        if (!isset($row['app'])) {
+                            $row['app'] = $app;
+                        }
+                        $dependencies[$app][$uniqueName] = $row;
+                    }
+                }
+            }
+        }
+        
+        return $dependencies;
     }
     
     private
+        $_vendorDir,
         $_name,
         $_description,
         $_version,
         $_type,
         $_keywords,
         $_homepage,
-        $_time,
-        $_license,
         $_authors,
         $_support,
         $_dependencies,
         $_devDependencies,
-        $_conflict,
-        $_replace,
-        $_provide,
         $_suggest,
-        $_autoloadPsr4,
         $_autoloadPsr0,
-        $_autoloadClassmap,
-        $_autoloadFiles,
-        $_includePath,
-        $_targetDir,
-        $_minimumStability,
-        $_preferStable,
+        $_autoloadPsr4,
         $_repositories,
-        $_config,
-        $_scripts,
         $_extra,
-        $_bin,
-        $_archive,
-        $_rawData;
+        $_app;
+    
 }

@@ -19,21 +19,21 @@ interface DispatchResponseInterface
      * 操作成功后返回结果至客户端
      *
      * @param string $message 提示信息
-     * @param mixed  $data 方法内需要使用的数据
+     * @param mixed  $url     跳转地址
      *
      * @return mixed
      */
-    public function success($message = '', $data = []);
+    public function success($message = '', $url = null);
     
     /**
      * 操作失败后返回结果至客户端
      *
      * @param string $message 提示信息
-     * @param mixed  $data 方法内需要使用的数据
+     * @param mixed  $url     跳转地址
      *
      * @return mixed
      */
-    public function error($message = '', $data = []);
+    public function error($message = '', $url = null);
     
     /**
      * 储存赋值数据

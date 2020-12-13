@@ -22,7 +22,7 @@ class EnableEnum extends Enums
         ENABLE = 1;
     
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     protected static function _list(): array
     {

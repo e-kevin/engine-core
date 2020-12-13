@@ -7,39 +7,47 @@
 
 namespace EngineCore\console;
 
-use EngineCore\dispatch\DispatchTrait;
 use EngineCore\Ec;
-use yii\helpers\Console;
 
 /**
- * 支持系统调度功能（Dispatch）的基础Controller类
+ * console的基础Controller类
  *
  * @author E-Kevin <e-kevin@qq.com>
  */
 class Controller extends \yii\console\Controller
 {
     
-    use DispatchTrait;
-    
     public function beforeAction($action)
     {
-        if (parent::beforeAction($action)) {
-            $version = Ec::getVersion();
-            $this->stdout(<<<ICON
- __      __      _________                __
-/  \    /  \____ \_   ___ \  ____   _____/  |_  ___________
-\   \/\/   /  _ \/    \  \/_/ __ \ /    \   __\/ __ \_  __ \
- \        (  <_> )     \___\  ___/|   |  \  | \  ___/|  | \/
-  \__/\  / \____/ \______  /\___  >___|  /__|  \___  >__|
-       \/                \/     \/     \/          \/
+        $version = Ec::getVersion();
+        $this->stdout("\n");
+        $this->stdout(<<<ICON
+__________              _____                  _________
+___  ____/_____________ ___(_)___________      __  ____/_________________
+__  __/  __  __ \_  __ `/_  /__  __ \  _ \     _  /    _  __ \_  ___/  _ \
+_  /___  _  / / /  /_/ /_  / _  / / /  __/     / /___  / /_/ /  /   /  __/
+/_____/  /_/ /_/_\__, / /_/  /_/ /_/\___/      \____/  \____//_/    \___/
+                /____/
 ICON
-                , Console::FG_GREEN);
-            $this->stdout("\n\n(based on EngineCore v{$version})\n\n");
-            
-            return true;
+        );
+//            $this->stdout(<<<ICON
+//▓█████  ███▄    █   ▄████  ██▓ ███▄    █ ▓█████     ▄████▄   ▒█████   ██▀███  ▓█████
+//▓█   ▀  ██ ▀█   █  ██▒ ▀█▒▓██▒ ██ ▀█   █ ▓█   ▀    ▒██▀ ▀█  ▒██▒  ██▒▓██ ▒ ██▒▓█   ▀
+//▒███   ▓██  ▀█ ██▒▒██░▄▄▄░▒██▒▓██  ▀█ ██▒▒███      ▒▓█    ▄ ▒██░  ██▒▓██ ░▄█ ▒▒███
+//▒▓█  ▄ ▓██▒  ▐▌██▒░▓█  ██▓░██░▓██▒  ▐▌██▒▒▓█  ▄    ▒▓▓▄ ▄██▒▒██   ██░▒██▀▀█▄  ▒▓█  ▄
+//░▒████▒▒██░   ▓██░░▒▓███▀▒░██░▒██░   ▓██░░▒████▒   ▒ ▓███▀ ░░ ████▓▒░░██▓ ▒██▒░▒████▒
+//░░ ▒░ ░░ ▒░   ▒ ▒  ░▒   ▒ ░▓  ░ ▒░   ▒ ▒ ░░ ▒░ ░   ░ ░▒ ▒  ░░ ▒░▒░▒░ ░ ▒▓ ░▒▓░░░ ▒░ ░
+// ░ ░  ░░ ░░   ░ ▒░  ░   ░  ▒ ░░ ░░   ░ ▒░ ░ ░  ░     ░  ▒     ░ ▒ ▒░   ░▒ ░ ▒░ ░ ░  ░
+//   ░      ░   ░ ░ ░ ░   ░  ▒ ░   ░   ░ ░    ░      ░        ░ ░ ░ ▒    ░░   ░    ░
+//   ░  ░         ░       ░  ░           ░    ░  ░   ░ ░          ░ ░     ░        ░  ░
+//ICON
+//);
+        $this->stdout("\n\n(based on EngineCore v{$version})\n\n");
+        if (!parent::beforeAction($action)) {
+            return false;
         }
         
-        return false;
+        return true;
     }
     
 }

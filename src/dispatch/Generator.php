@@ -11,7 +11,6 @@ use EngineCore\base\Modularity;
 use EngineCore\Ec;
 use EngineCore\helpers\ArrayHelper;
 use EngineCore\helpers\NamespaceHelper;
-use EngineCore\helpers\StringHelper;
 use Yii;
 use yii\base\BaseObject;
 use yii\base\InvalidConfigException;
@@ -27,19 +26,19 @@ class Generator extends BaseObject implements DispatchGeneratorInterface
 {
     
     /**
-     * @var BaseDispatchManager 调度器管理器
+     * @var AbstractDispatchManager 调度器管理器
      */
     protected $dm;
     
     /**
      * Generator constructor.
      *
-     * @param BaseDispatchManager $dispatchManager
-     * @param array               $config
+     * @param AbstractDispatchManager $dispatchManager
+     * @param array                   $config
      *
      * @author E-Kevin <e-kevin@qq.com>
      */
-    public function __construct(BaseDispatchManager $dispatchManager, array $config = [])
+    public function __construct(AbstractDispatchManager $dispatchManager, array $config = [])
     {
         $this->dm = $dispatchManager;
         parent::__construct($config);
@@ -85,7 +84,7 @@ class Generator extends BaseObject implements DispatchGeneratorInterface
     /**
      * 根据当前请求调度器ID所需的调度器配置初始化为实际可用的调度器配置
      *
-     * @param string $id 调度器ID
+     * @param string $id     调度器ID
      * @param array  $config 调度器配置
      *
      * @return array
@@ -156,7 +155,7 @@ class Generator extends BaseObject implements DispatchGeneratorInterface
         // 开发者运行模式下，只有当前控制器属于系统扩展控制器才生效
         if ($this->getRunRule()->isDeveloperMode()) {
             // 开发者调度器命名空间
-            $devDispatchNs = StringHelper::replace($dispatchNs, 'extensions', 'developer');
+            $devDispatchNs = 'developer\\' . $dispatchNs;
             // 开启主题功能，调度管理器将会在指定的主题目录内调用调度器
             if ($this->dm->getThemeRule()->isEnableTheme()) {
                 // 如果指定主题的开发者调度器不存在，则获取开发者目录下的默认主题的调度器
@@ -238,9 +237,10 @@ class Generator extends BaseObject implements DispatchGeneratorInterface
                 if (($pos = strrpos($config['class'], '\\dispatches')) !== false) {
                     // 将视图文件替换为别名路径
                     $viewFile = '@' . substr(str_replace('\\', '/', $config['class']), 0, $pos);
-                    $viewFile .= ($this->dm->getThemeRule()
-                            ->isEnableTheme() ? '/themes/' . $config['response']['themeName'] : '/views') .
-                        '/' . $this->dm->getController()->id . '/' . $config['response']['viewFile'];
+                    $viewFile .= ($this->dm->getThemeRule()->isEnableTheme()
+                            ? '/themes/' . $config['response']['themeName']
+                            : '/views')
+                        . '/' . $this->dm->getController()->id . '/' . $config['response']['viewFile'];
                     $config['response']['viewFile'] = $viewFile;
                 }
             }

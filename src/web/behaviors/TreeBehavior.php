@@ -8,7 +8,7 @@
 namespace EngineCore\web\behaviors;
 
 use EngineCore\{
-    db\ActiveRecord, base\Model, helpers\TreeHelper
+    db\ActiveRecord, base\Model, helpers\SessionFlashHelper, helpers\TreeHelper
 };
 use Yii;
 use yii\{
@@ -200,7 +200,7 @@ class TreeBehavior extends Behavior
     }
     
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function events()
     {
@@ -218,7 +218,7 @@ class TreeBehavior extends Behavior
     public function hasChildren($event)
     {
         if (!empty($this->getChildrenIds())) {
-            $this->owner->_result = Yii::t('Ec/app', 'Please delete or move the child data under this data before deleting it.');
+            SessionFlashHelper::setError(Yii::t('Ec/app', 'Please delete or move the child data under this data before deleting it.'));
             $event->isValid = false;
         }
     }
@@ -231,7 +231,7 @@ class TreeBehavior extends Behavior
     public function isValidParentId($event)
     {
         if (in_array($this->owner->{$this->parentField}, $this->getChildrenIds())) {
-            $this->owner->_result = Yii::t('Ec/app', 'Parent id is invalid.');
+            SessionFlashHelper::setError(Yii::t('Ec/app', 'Parent id is invalid.'));
             $event->isValid = false;
         }
     }

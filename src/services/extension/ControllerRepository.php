@@ -8,51 +8,96 @@
 namespace EngineCore\services\extension;
 
 use EngineCore\Ec;
-use EngineCore\extension\ControllerInfo;
-use EngineCore\extension\Repository\CategoryRepositoryInterface;
-use EngineCore\extension\Repository\ControllerRepositoryInterface;
-use EngineCore\extension\Repository\ControllerRepository as Repository;
+use EngineCore\enums\StatusEnum;
+use EngineCore\extension\repository\info\ControllerInfo;
+use EngineCore\extension\repository\models\ControllerModelInterface;
+use Yii;
+use yii\base\InvalidConfigException;
 
 /**
  * 控制器仓库管理服务类
- *
- * @property ControllerRepositoryInterface $repository
  *
  * @author E-Kevin <e-kevin@qq.com>
  */
 class ControllerRepository extends BaseCategoryRepository
 {
     
-    /**
-     * @var string 扩展信息类
-     */
     protected $extensionInfo = ControllerInfo::class;
     
-    private $_repository;
+    private $_model;
     
     /**
-     * 获取扩展仓库，主要由该仓库处理一些和数据库结构相关的业务逻辑
-     *
-     * @inheritdoc
-     * @return ControllerRepositoryInterface
+     * {@inheritdoc}
+     * @return \yii\db\ActiveRecord|ControllerModelInterface
      */
-    public function getRepository(): CategoryRepositoryInterface
+    public function getModel(): ControllerModelInterface
     {
-        if (null === $this->_repository) {
-            $this->setRepository(Repository::class);
+        if (null === $this->_model) {
+            throw new InvalidConfigException(get_class($this) . ' - The `model` property must be set.');
         }
         
-        return $this->_repository;
+        return $this->_model;
     }
     
     /**
-     * 设置扩展仓库
-     *
-     * @param string|array|callable $config
+     * {@inheritdoc}
      */
-    public function setRepository($config)
+    public function setModel($config = [])
     {
-        $this->_repository = Ec::createObject($config, [], ControllerRepositoryInterface::class);
+        $this->_model = Ec::createObject($config, [], ControllerModelInterface::class);
+    }
+    
+    /**
+     * {@inheritdoc}
+     */
+    public function hasModel(): bool
+    {
+        return null !== $this->_model;
+    }
+    
+    /**
+     * {@inheritdoc}
+     *
+     * @return \EngineCore\extension\repository\models\Controller|null|\yii\db\ActiveRecord
+     */
+    public function findOne(string $uniqueName, $app = null)
+    {
+        $app = $app ?: Yii::$app->id;
+        $configuration = $this->getConfigurationByApp(false, $app);
+        if (!isset($configuration[$uniqueName])) {
+            return null;
+        }
+        
+        /** @var ControllerInfo $infoInstance */
+        $infoInstance = $configuration[$uniqueName];
+        $model = $this->getModel()->findByUniqueName($uniqueName, $app);
+        if (null === $model) {
+            $model = $this->getModel()->loadDefaultValues();
+            // 根据扩展配置信息构建模型基础数据
+            $model->setAttributes([
+                'unique_id'     => $infoInstance->getUniqueId(),
+                'unique_name'   => $uniqueName,
+                'controller_id' => $infoInstance->getId(),
+                'module_id'     => $infoInstance->getModuleId(),
+                'status'        => StatusEnum::STATUS_ON,
+                'app'           => $app,
+            ]);
+        }
+        
+        $model->setInfoInstance($infoInstance);
+        
+        return $model;
+    }
+    
+    /**
+     * {@inheritdoc}
+     */
+    public function configureInfo($info, $config = [])
+    {
+        Yii::configure($info, [
+            'id'       => $config['controller_id'],
+            'moduleId' => $config['module_id'],
+        ]);
     }
     
 }

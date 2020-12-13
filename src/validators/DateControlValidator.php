@@ -50,7 +50,7 @@ class DateControlValidator extends NumberValidator
     public $minString = '1901-12-14 04:45:52';
     
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function init()
     {
@@ -66,7 +66,7 @@ class DateControlValidator extends NumberValidator
     }
     
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function validateAttribute($model, $attribute)
     {
@@ -85,7 +85,7 @@ class DateControlValidator extends NumberValidator
     }
     
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     protected function validateValue($value)
     {
@@ -104,7 +104,7 @@ class DateControlValidator extends NumberValidator
     }
     
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      * @param \yii\base\Model $model the model being validated
      */
     public function getClientOptions($model, $attribute)

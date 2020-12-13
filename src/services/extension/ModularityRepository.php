@@ -8,92 +8,140 @@
 namespace EngineCore\services\extension;
 
 use EngineCore\Ec;
-use EngineCore\extension\ModularityInfo;
-use EngineCore\extension\repository\CategoryRepositoryInterface;
-use EngineCore\extension\repository\ModularityRepositoryInterface;
-use EngineCore\extension\Repository\ModularityRepository as Repository;
+use EngineCore\enums\StatusEnum;
+use EngineCore\extension\repository\info\ModularityInfo;
+use EngineCore\extension\repository\models\ModuleModelInterface;
+use Yii;
+use yii\base\InvalidConfigException;
 use yii\helpers\ArrayHelper;
 
 /**
  * 模块仓库管理服务类
- *
- * @property ModularityRepositoryInterface $repository
  *
  * @author E-Kevin <e-kevin@qq.com>
  */
 class ModularityRepository extends BaseCategoryRepository
 {
     
-    /**
-     * @var string 扩展信息类
-     */
     protected $extensionInfo = ModularityInfo::class;
     
-    private $_repository;
+    private $_model;
     
     /**
-     * 获取扩展仓库，主要由该仓库处理一些和数据库结构相关的业务逻辑
-     *
-     * @inheritdoc
-     * @return ModularityRepositoryInterface
+     * {@inheritdoc}
+     * @return \EngineCore\db\ActiveRecord|ModuleModelInterface
      */
-    public function getRepository(): CategoryRepositoryInterface
+    public function getModel(): ModuleModelInterface
     {
-        if (null === $this->_repository) {
-            $this->setRepository(Repository::class);
+        if (null === $this->_model) {
+            throw new InvalidConfigException(get_class($this) . ' - The `model` property must be set.');
         }
         
-        return $this->_repository;
+        return $this->_model;
     }
     
     /**
-     * 设置扩展仓库
-     *
-     * @param string|array|callable $config
+     * {@inheritdoc}
      */
-    public function setRepository($config)
+    public function setModel($config = [])
     {
-        $this->_repository = Ec::createObject($config, [], ModularityRepositoryInterface::class);
+        $this->_model = Ec::createObject($config, [], ModuleModelInterface::class);
     }
     
     /**
-     * 获取当前应用本地【所有|已安装】的模块名称，主要用于列表筛选
+     * {@inheritdoc}
+     */
+    public function hasModel(): bool
+    {
+        return null !== $this->_model;
+    }
+    
+    /**
+     * {@inheritdoc}
+     *
+     * @return \EngineCore\extension\repository\models\Module|null|\EngineCore\db\ActiveRecord
+     */
+    public function findOne(string $uniqueName, $app = null)
+    {
+        $app = $app ?: Yii::$app->id;
+        $configuration = $this->getConfigurationByApp(false, $app);
+        if (!isset($configuration[$uniqueName])) {
+            return null;
+        }
+        
+        /** @var ModularityInfo $infoInstance */
+        $infoInstance = $configuration[$uniqueName];
+        $model = $this->getModel()->findByUniqueName($uniqueName, $app);
+        if (null === $model) {
+            $model = $this->getModel()->loadDefaultValues();
+            // 根据扩展配置信息构建模型基础数据
+            $model->setAttributes([
+                'unique_id'   => $infoInstance->getUniqueId(),
+                'unique_name' => $uniqueName,
+                'module_id'   => $infoInstance->getId(),
+                'status'      => StatusEnum::STATUS_ON,
+                'app'         => $app,
+            ]);
+        }
+        
+        $model->setInfoInstance($infoInstance);
+        
+        return $model;
+    }
+    
+    /**
+     * 获取指定应用【所有|已安装】的模块名称，主要用于列表筛选
      *
      * @param bool $installed 是否获取已安装的扩展，默认为`true`，获取
+     * @param null $app
      *
      * @return array e.g.
+     * ```php
      * [
-     * 'EngineCore/module-account' => '账户管理',
-     * 'EngineCore/module-rbac' => '权限管理',
+     * 'engine-core/module-account' => 'engine-core/module-account',
+     * 'engine-core/module-rbac' => 'engine-core/module-rbac',
      * ]
+     * ```
      */
-    public function getInstalledSelectListByApp($installed = true)
+    public function getSelectListByApp($installed = true, $app = null)
     {
         return ArrayHelper::getColumn(
-            $this->getConfigurationByApp($installed),
-            'infoInstance.name'
+            $this->getConfigurationByApp($installed, $app),
+            'uniqueName'
         );
     }
     
     /**
      * 获取当前应用未安装的模块ID
      *
+     * todo 是否需要删除
+     *
      * @return array 未安装的模块ID
      */
-    public function getUninstalledModuleIdByApp()
+//    public function getUninstalledModuleIdByApp()
+//    {
+//        $installed = $this->getDbConfiguration();
+//        $configuration = $this->getConfigurationByApp();
+//        // 获取未安装的模块扩展配置
+//        foreach ($configuration as $uniqueName => $row) {
+//            // 剔除已安装的模块
+//            if (isset($installed[$uniqueName])) {
+//                unset($configuration[$uniqueName]);
+//                continue;
+//            }
+//        }
+//
+//        return ArrayHelper::getColumn($configuration, 'infoInstance.id');
+//    }
+    
+    /**
+     * {@inheritdoc}
+     */
+    public function configureInfo($info, $config = [])
     {
-        $installed = $this->getInstalled();
-        $configuration = $this->getConfigurationByApp();
-        // 获取未安装的模块扩展配置
-        foreach ($configuration as $uniqueName => $row) {
-            // 剔除已安装的模块
-            if (isset($installed[$uniqueName])) {
-                unset($configuration[$uniqueName]);
-                continue;
-            }
-        }
-        
-        return ArrayHelper::getColumn($configuration, 'infoInstance.id');
+        Yii::configure($info, [
+            'id' => $config['module_id'],
+        ]);
     }
     
 }

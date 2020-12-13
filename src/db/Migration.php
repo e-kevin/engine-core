@@ -7,18 +7,27 @@
 
 namespace EngineCore\db;
 
+use EngineCore\extension\repository\info\ExtensionInfo;
+use EngineCore\helpers\MigrationHelper;
+
 /**
  * Class Migration
  */
 class Migration extends \yii\db\Migration
 {
+    
+    /**
+     * @var string 数据库表前缀随机码
+     */
+    protected $randCode = ExtensionInfo::EXT_RAND_CODE;
+    
     /**
      * @var string the table options
      */
     protected $tableOptions = '';
     
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function init()
     {
@@ -36,7 +45,7 @@ class Migration extends \yii\db\Migration
      *
      * @return string
      */
-    protected function buildTableComment($comment = '')
+    protected function buildTableComment(string $comment = '')
     {
         return $comment !== '' ? ' COMMENT = ' . $this->db->quoteValue($comment) : '';
     }
@@ -49,6 +58,32 @@ class Migration extends \yii\db\Migration
     protected function setForeignKeyCheck($check = false)
     {
         $this->execute('SET foreign_key_checks = ' . (int)$check . ';');
+    }
+    
+    /**
+     * 创建带随机码的数据库表名
+     *
+     * @param string $table
+     *
+     * @return string
+     */
+    public function createTableNameWithCode(string $table)
+    {
+        return MigrationHelper::createTableName($table, $this->randCode);
+    }
+    
+    /**
+     * 创建带随机码的索引名
+     *
+     * @param string       $table
+     * @param string|array $columns
+     * @param string       $name
+     * @param bool         $unique
+     */
+    public function createIndexWithCode(string $table, $columns, $name = null, $unique = false)
+    {
+        $name = MigrationHelper::createIndexName($table, $columns, $name, $this->randCode);
+        parent::createIndex($name, $this->createTableNameWithCode($table), $columns, $unique);
     }
     
 }

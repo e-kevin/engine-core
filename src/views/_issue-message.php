@@ -19,7 +19,7 @@
         <div class="col-md-12">
             <p class="text-warning">
                 <span class="glyphicon glyphicon-alert"></span>
-                <?= Yii::t('Ec/app',
+                <?= Yii::t('ec/app',
                     'Found a bug? Tell about it to the extension developer.',
                     ['issueUrl' => $issueUrl]
                 ) ?>

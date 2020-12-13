@@ -5,10 +5,9 @@
  * @license BSD 3-Clause License
  */
 
-namespace EngineCore\models;
+namespace EngineCore\extension\config;
 
 use EngineCore\db\ActiveRecord;
-use EngineCore\extension\config\ConfigProviderInterface;
 use Yii;
 
 /**
@@ -32,7 +31,7 @@ class ConfigModel extends ActiveRecord implements ConfigProviderInterface
 {
     
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function rules()
     {
@@ -49,7 +48,7 @@ class ConfigModel extends ActiveRecord implements ConfigProviderInterface
     }
     
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function attributeLabels()
     {
@@ -71,7 +70,7 @@ class ConfigModel extends ActiveRecord implements ConfigProviderInterface
     }
     
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function attributeHints()
     {

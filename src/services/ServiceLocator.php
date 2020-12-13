@@ -10,7 +10,7 @@ namespace EngineCore\services;
 use EngineCore\base\Service;
 
 /**
- * @property Extension $extension 系统扩展服务类
+ * @property Extension $extension 扩展服务类
  * @property System    $system 系统服务类
  * @property Menu      $menu 菜单服务类
  *
@@ -25,19 +25,19 @@ class ServiceLocator extends \EngineCore\base\ServiceLocator
         MENU_SERVICE = 'menu';
     
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function coreLocators()
     {
         return [
-            self::EXTENSION_SERVICE => ['class' => '\EngineCore\services\Extension'],
-            self::SYSTEM_SERVICE    => ['class' => '\EngineCore\services\System'],
-            self::MENU_SERVICE      => ['class' => '\EngineCore\services\Menu'],
+            self::EXTENSION_SERVICE => ['class' => 'EngineCore\services\Extension'],
+            self::SYSTEM_SERVICE    => ['class' => 'EngineCore\services\System'],
+            self::MENU_SERVICE      => ['class' => 'EngineCore\services\Menu'],
         ];
     }
     
     /**
-     * 系统扩展服务类
+     * 扩展服务类
      *
      * @return Extension|Service
      */

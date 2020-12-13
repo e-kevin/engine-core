@@ -30,7 +30,7 @@ class Dispatch extends Action
     public $controller;
     
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function runWithParams($params)
     {
@@ -82,15 +82,10 @@ class Dispatch extends Action
      */
     public function setResponse($response)
     {
-        $this->_response = Yii::createObject($response, [$this]);
         if ($this->controller->getDispatchManager()->getGenerator()->isSupportRender()) {
-            if (!$this->_response instanceof WebDispatchResponse) {
-                throw new InvalidConfigException('`' . get_class($this->_response) . '` class must extend from `' . WebDispatchResponse::class . '`.');
-            }
+            $this->_response = Ec::createObject($response, [$this], WebDispatchResponse::class);
         } else {
-            if (!is_subclass_of($this->_response, DispatchResponse::class)) {
-                throw new InvalidConfigException('`' . get_class($this->_response) . '` class must extend from `' . DispatchResponse::class . '`.');
-            }
+            $this->_response = Ec::createObject($response, [$this], DispatchResponse::class);
         }
     }
     

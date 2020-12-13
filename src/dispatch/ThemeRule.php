@@ -25,12 +25,12 @@ class ThemeRule extends BaseObject implements DispatchThemeRuleInterface
     /**
      * ThemeRule constructor.
      *
-     * @param BaseDispatchManager $dispatchManager
-     * @param array               $config
+     * @param AbstractDispatchManager $dispatchManager
+     * @param array                   $config
      *
      * @author E-Kevin <e-kevin@qq.com>
      */
-    public function __construct(BaseDispatchManager $dispatchManager, array $config = [])
+    public function __construct(AbstractDispatchManager $dispatchManager, array $config = [])
     {
         $this->dm = $dispatchManager;
         parent::__construct($config);
@@ -39,7 +39,7 @@ class ThemeRule extends BaseObject implements DispatchThemeRuleInterface
     protected $_isEnable;
     
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function isEnableTheme(): bool
     {

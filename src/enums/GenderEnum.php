@@ -23,7 +23,7 @@ class GenderEnum extends Enums
         FEMALE = 2;
     
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     protected static function _list(): array
     {

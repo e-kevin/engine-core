@@ -7,7 +7,7 @@
 
 namespace EngineCore\dispatch;
 
-use EngineCore\extension\ExtensionInfo;
+use EngineCore\extension\repository\info\ExtensionInfo;
 use EngineCore\helpers\ArrayHelper;
 use yii\base\BaseObject;
 
@@ -16,9 +16,9 @@ use yii\base\BaseObject;
  *
  * 运行模式，可选值有：
  *  - 0: 运行系统扩展，运行在'@extensions'目录下的扩展
- * @see \EngineCore\extension\ExtensionInfo::RUN_MODULE_EXTENSION
+ * @see \EngineCore\extension\repository\info\ExtensionInfo::RUN_MODULE_EXTENSION
  *  - 1: 运行开发者扩展，运行在'@developer'目录下的扩展
- * @see \EngineCore\extension\ExtensionInfo::RUN_MODULE_DEVELOPER
+ * @see \EngineCore\extension\repository\info\ExtensionInfo::RUN_MODULE_DEVELOPER
  *
  * 约定：
  *  - 系统扩展控制器，位于项目内'@extensions'目录下的控制器
@@ -54,12 +54,12 @@ class RunRule extends BaseObject implements DispatchRunRuleInterface
     /**
      * RunRule constructor.
      *
-     * @param BaseDispatchManager $dispatchManager
-     * @param array               $config
+     * @param AbstractDispatchManager $dispatchManager
+     * @param array                   $config
      *
      * @author E-Kevin <e-kevin@qq.com>
      */
-    public function __construct(BaseDispatchManager $dispatchManager, array $config = [])
+    public function __construct(AbstractDispatchManager $dispatchManager, array $config = [])
     {
         $this->dm = $dispatchManager;
         parent::__construct($config);

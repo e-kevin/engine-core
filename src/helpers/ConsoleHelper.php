@@ -137,7 +137,7 @@ class ConsoleHelper extends BaseObject
      */
     private static function writeScript($js)
     {
-        echo "<script>$js</script>";
+        echo "<script>{$js}</script>";
         ob_flush();
         flush();
     }

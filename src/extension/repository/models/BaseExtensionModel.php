@@ -1,6 +1,6 @@
 <?php
 /**
- * @link https://github.com/EngineCore/module-extension
+ * @link https://github.com/e-kevin/engine-core
  * @copyright Copyright (c) 2020 E-Kevin
  * @license BSD 3-Clause License
  */
@@ -9,22 +9,14 @@ namespace EngineCore\extension\repository\models;
 
 use EngineCore\db\ActiveRecord;
 use EngineCore\Ec;
-use EngineCore\extension\ControllerInfo;
-use EngineCore\extension\ExtensionInfo;
-use EngineCore\extension\ModularityInfo;
-use EngineCore\extension\ThemeInfo;
+use EngineCore\extension\repository\info\ControllerInfo;
+use EngineCore\extension\repository\info\ExtensionInfo;
+use EngineCore\extension\repository\info\ModularityInfo;
+use EngineCore\extension\repository\info\ThemeInfo;
 use Yii;
-use yii\base\InvalidConfigException;
-use yii\db\AfterSaveEvent;
 
 /**
- * 扩展通用模型类，一般主题扩展、模块扩展、控制器扩展需要继承该类
- *
- * @property string  $id
- * @property string  $extension_name
- * @property integer $is_system
- * @property integer $status
- * @property integer $run
+ * 扩展通用模型类，一般主题扩展、模块扩展、控制器扩展模型需要继承该类
  *
  * @author E-Kevin <e-kevin@qq.com>
  */
@@ -34,38 +26,47 @@ class BaseExtensionModel extends ActiveRecord implements RepositoryModelInterfac
     /**
      * @var ModularityInfo|ControllerInfo|ThemeInfo 扩展信息类
      */
-    protected $_infoInstance;
+    private $_infoInstance;
     
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function rules()
     {
         return [
-            [['id', 'extension_name'], 'required'],
-            [['id', 'extension_name'], 'unique'],
-            [['is_system', 'status', 'run'], 'integer'],
-            [['id'], 'string', 'max' => 64],
-            [['extension_name'], 'string', 'max' => 255],
+            // unique_id rules
+            'uniqueIdRequired'   => ['unique_id', 'required'],
+            'uniqueIdLength'     => ['unique_id', 'string', 'max' => 32],
+            // unique_name rules
+            'uniqueNameRequired' => ['unique_name', 'required'],
+            'uniqueNameLength'   => ['unique_name', 'string', 'max' => 50],
+            // app rules
+            'appRequired'        => ['app', 'required'],
+            'appLength'          => ['app', 'string', 'max' => 10],
+            // other rules
+            ['is_system', 'integer'],
+            ['status', 'integer'],
+            ['run', 'integer'],
         ];
     }
     
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function attributeLabels()
     {
         return [
-            'id'             => 'ID',
-            'extension_name' => Yii::t('ec/extension', 'Extension Name'),
-            'is_system'      => Yii::t('ec/extension', 'Is System'),
-            'status'         => Yii::t('ec/app', 'Status'),
-            'run'            => Yii::t('ec/extension', 'Run Mode'),
+            'unique_id'          => 'ID',
+            'unique_name' => Yii::t('ec/extension', 'Unique name'),
+            'app'         => Yii::t('ec/extension', 'App'),
+            'is_system'   => Yii::t('ec/extension', 'Is system'),
+            'status'      => Yii::t('ec/app', 'Status'),
+            'run'         => Yii::t('ec/extension', 'Run mode'),
         ];
     }
     
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function attributeHints()
     {
@@ -76,7 +77,7 @@ class BaseExtensionModel extends ActiveRecord implements RepositoryModelInterfac
     }
     
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function getAll()
     {
@@ -84,7 +85,7 @@ class BaseExtensionModel extends ActiveRecord implements RepositoryModelInterfac
     }
     
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function getInfoInstance()
     {
@@ -92,18 +93,34 @@ class BaseExtensionModel extends ActiveRecord implements RepositoryModelInterfac
     }
     
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
-    public function setInfoInstance($info)
+    public function setInfoInstance(ExtensionInfo $info)
     {
-        if (!is_subclass_of($info, ExtensionInfo::class)) {
-            throw new InvalidConfigException('The `info` property must return an object extends `' . ExtensionInfo::class . '`.');
-        }
         $this->_infoInstance = $info;
     }
     
     /**
-     * @inheritdoc
+     * {@inheritdoc}
+     */
+    public function hasInfoInstance(): bool
+    {
+        return null !== $this->_infoInstance;
+    }
+    
+    /**
+     * {@inheritdoc}
+     */
+    public function findByUniqueName($uniqueName, $app = null)
+    {
+        return self::find()->where([
+            'unique_name' => $uniqueName,
+            'app'         => $app ?: Yii::$app->id,
+        ])->one();
+    }
+    
+    /**
+     * {@inheritdoc}
      */
     public function beforeValidate()
     {
@@ -111,8 +128,12 @@ class BaseExtensionModel extends ActiveRecord implements RepositoryModelInterfac
             return false;
         }
         // 检查是否满足扩展依赖关系
-        if (!Ec::$service->getExtension()->getDependent()->checkDependencies($this->extension_name)) {
-            $this->_result = Ec::$service->getExtension()->getDependent()->getInfo();
+        if (!Ec::$service->getExtension()->getDependent()->checkDependencies($this->unique_name, $this->app)) {
+            $this->getErrorService()->addModelOtherErrors(
+                Ec::$service->getExtension()->getDependent()->getInfo(),
+                get_called_class(),
+                __METHOD__
+            );
             
             return false;
         }
@@ -121,42 +142,67 @@ class BaseExtensionModel extends ActiveRecord implements RepositoryModelInterfac
     }
     
     /**
-     * @inheritdoc
+     * {@inheritdoc}
+     */
+    public function beforeSave($insert)
+    {
+        if (!parent::beforeSave($insert)) {
+            return false;
+        }
+        if ($insert && !$this->hasInfoInstance()) {
+            $this->getErrorService()->addModelOtherErrors(
+                'The `infoInstance` property must be set.', get_called_class(), __METHOD__);
+            
+            return false;
+        }
+        
+        return true;
+    }
+    
+    /**
+     * {@inheritdoc}
      */
     public function beforeDelete()
     {
         if (!parent::beforeDelete()) {
             return false;
         }
-        if (!$this->getInfoInstance()->canUninstall) {
-            $this->_result = $this->extension_name . Yii::t('ec/extension',
+        if (!$this->hasInfoInstance()) {
+            $this->getErrorService()->addModelOtherErrors(
+                'The `infoInstance` property must be set.', get_called_class(), __METHOD__);
+            
+            return false;
+        }
+        if (!$this->getCanUninstall()) {
+            $this->getErrorService()->addModelOtherErrors($this->unique_name
+                . Yii::t('ec/extension',
                     'The extension is a system extension and uninstallation is not supported for the time being.'
-                );
+                ), get_called_class(), __METHOD__);
             
             return false;
         } else {
             $arr = [];
             $i = 1;
             // 获取已经安装的扩展，检测当前扩展是否存在依赖关系
-            foreach (Ec::$service->getExtension()->getRepository()->getInstalled() as $uniqueName => $row) {
-                if ($uniqueName == $this->extension_name) {
+            foreach (Ec::$service->getExtension()->getRepository()->getDbConfiguration() as $uniqueName => $row) {
+                if ($uniqueName == $this->unique_name) {
                     continue;
                 }
                 /** @var ExtensionInfo $infoInstance */
                 $infoInstance = Ec::$service->getExtension()->getRepository()->getLocalConfiguration()[$uniqueName]['infoInstance'];
                 // 获取依赖关系
-                foreach ($infoInstance->getDepends() as $name => $version) {
-                    if ($name == $this->extension_name) {
+                foreach ($infoInstance->getDependencies() as $name => $version) {
+                    if ($name == $this->unique_name) {
                         $arr[] = $i++ . ') ' . $uniqueName;
                     }
                 }
             }
             
             if ($arr) {
-                $this->_result = Yii::t('ec/extension',
+                $this->getErrorService()->addModelOtherErrors(Yii::t('ec/extension',
                     'Please remove the following extended dependencies before performing the current operation:{operation}',
                     ['operation' => implode("\n", $arr)]
-                );
+                ), get_called_class(), __METHOD__);
                 
                 return false;
             }
@@ -166,11 +212,10 @@ class BaseExtensionModel extends ActiveRecord implements RepositoryModelInterfac
     }
     
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function afterDelete()
     {
-        //todo 改为事件
         parent::afterDelete();
         $this->getInfoInstance()->uninstall(); // 调用扩展内置卸载方法
         Ec::$service->getMenu()->getConfig()->sync(); // 同步菜单
@@ -178,20 +223,27 @@ class BaseExtensionModel extends ActiveRecord implements RepositoryModelInterfac
     }
     
     /**
-     * @inheritdoc
+     * 获取扩展是否可以卸载
+     *
+     * @return bool
      */
-    public function afterSave($insert, $changedAttributes)
+    public function getCanUninstall(): bool
     {
-        parent::afterSave($insert, $changedAttributes);
-        $res = true;
-        if ($insert) {
-            $res = $this->getInfoInstance()->install(); // 调用扩展内置安装方法
+        if ($this->getIsNewRecord()) {
+            return false;
+        } else {
+            return !$this->is_system;
         }
-        if ($res) {
-            $this->trigger(self::EVENT_SYNC, new AfterSaveEvent([
-                'changedAttributes' => $changedAttributes,
-            ]));
-        }
+    }
+    
+    /**
+     * 获取扩展是否可以安装
+     *
+     * @return bool
+     */
+    public function getCanInstall(): bool
+    {
+        return $this->getIsNewRecord();
     }
     
 }

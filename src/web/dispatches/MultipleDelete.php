@@ -21,7 +21,7 @@ class MultipleDelete extends Delete
 {
     
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function init()
     {
@@ -35,12 +35,11 @@ class MultipleDelete extends Delete
     }
     
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function run($id)
     {
         $res = false;
-        $message = '';
         /** @var ActiveRecord[] $items */
         $items = $this->modelClass::findAll(StringHelper::parseIds($id));
         foreach ($items as $item) {
@@ -54,12 +53,11 @@ class MultipleDelete extends Delete
                 }
             });
             if (!$res) {
-                $message = $item->_result;
                 break;
             }
         }
         
-        return $this->getResult($res, $message);
+        return $this->getResult($res);
     }
     
 }

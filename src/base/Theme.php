@@ -12,6 +12,8 @@ use Yii;
 /**
  * 支持系统调度功能的主题组件
  *
+ * todo 是否仍有用？
+ *
  * @property array $themeConfig
  * @property array $defaultPathMap
  *

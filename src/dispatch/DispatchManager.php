@@ -19,7 +19,7 @@ use yii\helpers\ArrayHelper;
  *
  * @author E-Kevin <e-kevin@qq.com>
  */
-class DispatchManager extends BaseDispatchManager
+class DispatchManager extends AbstractDispatchManager
 {
     
     /**
@@ -28,7 +28,7 @@ class DispatchManager extends BaseDispatchManager
     protected $_controllerDispatchMap;
     
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function getControllerDispatchMap(): array
     {
@@ -64,7 +64,7 @@ class DispatchManager extends BaseDispatchManager
     private $_config = [];
     
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function getConfig(): array
     {
@@ -228,7 +228,7 @@ class DispatchManager extends BaseDispatchManager
     }
     
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function getDispatch($route)
     {

@@ -36,7 +36,7 @@ class ServiceLocator extends BaseObject
     private $_instance;
     
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function __construct(array $config = [])
     {
@@ -120,12 +120,8 @@ class ServiceLocator extends BaseObject
             throw new InvalidConfigException('Invalid param: ' . $id);
         }
         $arr = explode('.', $id);
-        /** @var Service $service */
-        $service = $this->get(array_shift($arr));
-        /** @var Service $subService */
-        $subService = $service->get(array_shift($arr));
         
-        return $subService;
+        return $this->get(array_shift($arr))->getService(array_shift($arr));
     }
     
 }

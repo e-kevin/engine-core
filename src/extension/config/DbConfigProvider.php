@@ -5,10 +5,12 @@
  * @license BSD 3-Clause License
  */
 
-namespace EngineCore\base;
+namespace EngineCore\extension\config;
 
-use EngineCore\extension\config\ConfigProviderInterface;
+use Yii;
 use yii\base\BaseObject;
+use yii\base\InvalidConfigException;
+use yii\caching\Cache;
 use yii\db\Connection;
 use yii\db\Query;
 use yii\di\Instance;
@@ -21,10 +23,22 @@ use yii\di\Instance;
 class DbConfigProvider extends BaseObject implements ConfigProviderInterface
 {
     
+    use ConfigTrait;
+    
     /**
      * @var Connection|string|array 数据库组件配置
      */
     public $db = 'db';
+    
+    /**
+     * @var Cache|string|array 缓存组件名
+     */
+    public $cache = 'commonCache';
+    
+    /**
+     * @var int 缓存间隔，默认为'0'，代表不过期
+     */
+    public $cacheDuration = 0;
     
     /**
      * @var string 配置数据库表名
@@ -32,45 +46,49 @@ class DbConfigProvider extends BaseObject implements ConfigProviderInterface
     public $tableName;
     
     /**
-     * @var string 配置键名
-     */
-    public $nameField = 'name';
-    
-    /**
-     * @var string 配置值字段
-     */
-    public $valueField = 'value';
-    
-    /**
-     * @var string 额外数据字段
-     */
-    public $extraField = 'extra';
-    
-    /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function init()
     {
+        if ($this->tableName === null) {
+            throw new InvalidConfigException('The `$tableName` property must be set.');
+        }
         $this->db = Instance::ensure($this->db, Connection::class);
+        $this->cache = Instance::ensure(Yii::$app->has($this->cache) ?
+            $this->cache
+            : [
+                'class'     => 'yii\\caching\\FileCache',
+                'cachePath' => '@common/runtime/cache',
+            ], Cache::class);
     }
     
+    private $_all;
+    
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function getAll()
     {
-        return (new Query())
-            ->select([$this->nameField, $this->valueField, $this->extraField])
-            ->from($this->tableName)
-            ->indexBy($this->nameField)
-            ->all($this->db);
+        if ($this->_all === null) {
+            $this->_all = $this->cache->getOrSet($this->configKey, function () {
+                return (new Query())
+                    ->select([$this->nameField, $this->valueField, $this->extraField])
+                    ->from($this->tableName)
+                    ->indexBy($this->nameField)
+                    ->all($this->db);
+            }, $this->cacheDuration);
+        }
+        
+        return $this->_all;
     }
     
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function clearCache()
     {
+        $this->_all = null;
+        $this->cache->delete($this->configKey);
     }
     
 }

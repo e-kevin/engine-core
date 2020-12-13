@@ -16,9 +16,9 @@ use yii\base\InvalidConfigException;
 /**
  * 让Controller控制器类支持系统（Dispatch）调度功能
  *
- * @property \EngineCore\dispatch\BaseDispatchManager        $dispatchManager 调度器管理器
+ * @property \EngineCore\dispatch\AbstractDispatchManager    $dispatchManager    调度器管理器
  * @property array                                           $defaultDispatchMap 默认调度器配置
- * @property \EngineCore\extension\RunningExtensionInterface $extension 当前控制器所属的扩展信息
+ * @property \EngineCore\extension\RunningExtensionInterface $extension          当前控制器所属的扩展信息
  *
  * @author E-Kevin <e-kevin@qq.com>
  */
@@ -65,7 +65,7 @@ trait DispatchTrait
     protected $defaultDispatchMap = [];
     
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function init()
     {
@@ -88,7 +88,7 @@ trait DispatchTrait
     }
     
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      * @return null|\yii\base\Action|Dispatch
      */
     public function createAction($id)
@@ -110,7 +110,7 @@ trait DispatchTrait
     public function getDispatchManager()
     {
         if (null === $this->_dispatchManager) {
-            $this->_dispatchManager = Ec::createObject($this->dispatchManagerDefinition(), [$this], DispatchManagerInterface::class);
+            $this->_dispatchManager = Ec::createObject($this->dispatchManagerDefinition(), [$this], AbstractDispatchManager::class);
         }
         
         return $this->_dispatchManager;

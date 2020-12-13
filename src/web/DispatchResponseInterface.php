@@ -10,7 +10,7 @@ namespace EngineCore\web;
 /**
  * 调度响应器接口类，用于更改反馈给WEB客户端的表现形式
  *
- * @property int $waitSecond 页面跳转停留时间
+ * @property int   $waitSecond 页面跳转停留时间
  * @property mixed $jumpUrl 页面跳转地址
  *
  * @author E-Kevin <e-kevin@qq.com>
@@ -22,7 +22,7 @@ interface DispatchResponseInterface extends \EngineCore\dispatch\DispatchRespons
      * 渲染页面
      *
      * @param string|null $view 需要渲染的视图文件
-     * @param array $assign 视图模板赋值数据
+     * @param array       $assign 视图模板赋值数据
      *
      * @return mixed
      */

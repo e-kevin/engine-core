@@ -18,6 +18,11 @@ use yii\helpers\FileHelper as BaseFileHelper;
 class FileHelper extends BaseFileHelper
 {
     
+    public static function isAbsolutePath($path)
+    {
+        return substr($path, 0, 1) === '/' || substr($path, 1, 1) === ':' || substr($path, 0, 2) === '\\\\';
+    }
+    
     public static function buildPath($paths, $withStart = false, $withEnd = false)
     {
         $res = '';
@@ -94,7 +99,7 @@ class FileHelper extends BaseFileHelper
     
     public static function removeFile($filePath)
     {
-        return \yii\helpers\FileHelper::unlink($filePath);
+        return parent::unlink($filePath);
     }
     
     public static function readFile($filePath)
@@ -119,12 +124,12 @@ class FileHelper extends BaseFileHelper
     
     public static function createDir($dirPath)
     {
-        BaseFileHelper::createDirectory($dirPath);
+        parent::createDirectory($dirPath);
     }
     
     public static function removeDir($dirPath)
     {
-        BaseFileHelper::removeDirectory($dirPath);
+        parent::removeDirectory($dirPath);
     }
     
 }

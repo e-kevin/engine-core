@@ -18,17 +18,19 @@ class AppEnum extends Enums
     const
         BACKEND = 'backend',
         FRONTEND = 'frontend',
-        COMMAND = 'command';
+        CONSOLE = 'console',
+        COMMON = 'common';
     
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     protected static function _list(): array
     {
         return [
-            self::BACKEND => '后台应用',
+            self::BACKEND  => '后台应用',
             self::FRONTEND => '前台应用',
-            self::COMMAND => '控制台应用',
+            self::CONSOLE  => '控制台应用',
+            self::COMMON   => '公共应用',
         ];
     }
     

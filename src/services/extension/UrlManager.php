@@ -8,8 +8,8 @@
 namespace EngineCore\services\extension;
 
 use EngineCore\services\Extension;
-use EngineCore\extension\ControllerInfo;
-use EngineCore\extension\ModularityInfo;
+use EngineCore\extension\repository\info\ControllerInfo;
+use EngineCore\extension\repository\info\ModularityInfo;
 use EngineCore\base\Service;
 use Yii;
 use yii\base\InvalidRouteException;
@@ -40,13 +40,13 @@ class UrlManager extends Service
      */
     public function getUrl($route = '', $extensionName = '')
     {
-        $config = $this->service->getLocal()->getConfiguration();
+        $config = $this->service->getRepository()->getLocalConfiguration();
         /** @var ModularityInfo $infoInstance */
         $infoInstance = null;
         if (empty($extensionName)) {
             foreach ($config as $uniqueName => $row) {
                 $infoInstance = $row['infoInstance'];
-                if (Yii::$app->controller->module->id == $infoInstance->id) {
+                if (Yii::$app->controller->module->id == $infoInstance->getId()) {
                     $extensionName = $uniqueName;
                     break;
                 }
@@ -64,15 +64,15 @@ class UrlManager extends Service
         }
         if (empty($route)) {
             if (is_subclass_of($infoInstance, ControllerInfo::class)) {
-                $route = $infoInstance->id;
+                $route = $infoInstance->getId();
             } elseif (is_subclass_of($infoInstance, ModularityInfo::class)) {
-                $route = '/' . $infoInstance->id;
+                $route = '/' . $infoInstance->getId();
             }
         } else {
             if (is_subclass_of($infoInstance, ControllerInfo::class)) {
-                $route = $infoInstance->id . '/' . rtrim($route, '/');
+                $route = $infoInstance->getId() . '/' . rtrim($route, '/');
             } elseif (is_subclass_of($infoInstance, ModularityInfo::class)) {
-                $route = '/' . $infoInstance->id . '/' . rtrim($route, '/');
+                $route = '/' . $infoInstance->getId() . '/' . rtrim($route, '/');
             }
         }
         

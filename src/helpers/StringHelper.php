@@ -22,7 +22,7 @@ class StringHelper
     /**
      * 字符串转换为数组，主要用于把分隔符调整到第二个参数
      *
-     * @param string $str 要分割的字符串
+     * @param string $str  要分割的字符串
      * @param string $glue 分割符
      *
      * @return array
@@ -157,11 +157,11 @@ class StringHelper
     /**
      * 截取中文字符串
      *
-     * @param string $str 需要截取的字符串
-     * @param integer $start 开始查询的下标
-     * @param integer $length 截取长度
-     * @param string $charset 字符串编码
-     * @param boolean $suffix 超出部分是否显示省略号
+     * @param string  $str     需要截取的字符串
+     * @param integer $start   开始查询的下标
+     * @param integer $length  截取长度
+     * @param string  $charset 字符串编码
+     * @param boolean $suffix  超出部分是否显示省略号
      *
      * @return string
      */
@@ -233,15 +233,15 @@ class StringHelper
      * 产生随机字串，可用来自动生成密码
      * 默认长度6位 字母和数字混合 支持中文
      *
-     * @param integer $len 长度
-     * @param integer $type 字串类型，默认去掉了容易混淆的字符oOLl和数字01，要添加请使用addChars参数
-     * 0 - 所有字母，包括大小写
-     * 1 - 数字
-     * 2 - 大写字母
-     * 3 - 小写字母
-     * 4 - 中文
-     * 默认 - 混合，默认去掉了容易混淆的字符oOLl和数字01，要添加请使用addChars参数
-     * @param string $addChars 额外字符
+     * @param integer $len      长度
+     * @param integer $type     字串类型，默认去掉了容易混淆的字符oOLl和数字01，要添加请使用addChars参数
+     *                          0 - 所有字母，包括大小写
+     *                          1 - 数字
+     *                          2 - 大写字母
+     *                          3 - 小写字母
+     *                          4 - 中文
+     *                          默认 - 混合，默认去掉了容易混淆的字符oOLl和数字01，要添加请使用addChars参数
+     * @param string  $addChars 额外字符
      *
      * @return string
      */
@@ -290,13 +290,13 @@ class StringHelper
      *
      * @param integer $number 数量
      * @param integer $length 长度
-     * @param integer $type 字串类型，默认去掉了容易混淆的字符oOLl和数字01，要添加请使用addChars参数
-     * 0 - 所有字母，包括大小写
-     * 1 - 数字
-     * 2 - 大写字母
-     * 3 - 小写字母
-     * 4 - 中文
-     * 默认 - 混合，默认去掉了容易混淆的字符oOLl和数字01，要添加请使用addChars参数
+     * @param integer $type   字串类型，默认去掉了容易混淆的字符oOLl和数字01，要添加请使用addChars参数
+     *                        0 - 所有字母，包括大小写
+     *                        1 - 数字
+     *                        2 - 大写字母
+     *                        3 - 小写字母
+     *                        4 - 中文
+     *                        默认 - 混合，默认去掉了容易混淆的字符oOLl和数字01，要添加请使用addChars参数
      *
      * @return bool|array
      */
@@ -326,10 +326,10 @@ class StringHelper
     /**
      * 带格式生成随机字符,支持批量生成,但可能存在重复
      *
-     * @param string $format 字符格式
-     *  - #:表示数字
-     *  - *:表示字母和数字
-     *  - $:表示字母
+     * @param string  $format 字符格式
+     *                        - #:表示数字
+     *                        - *:表示字母和数字
+     *                        - $:表示字母
      * @param integer $number 生成数量
      *
      * @return string | array
@@ -380,7 +380,7 @@ class StringHelper
     /**
      * 自动转换字符集 支持数组转换
      *
-     * @param $string
+     * @param        $string
      * @param string $from
      * @param string $to
      *
@@ -419,9 +419,9 @@ class StringHelper
     /**
      * 截取含有 html标签的字符串
      *
-     * @param string $str 待截取字符串
-     * @param int $length 截取长度
-     * @param string $url 链接
+     * @param string $str    待截取字符串
+     * @param int    $length 截取长度
+     * @param string $url    链接
      * @param string $anchor 截取锚点，如果截取过程中遇到这个标记锚点就截至该锚点处
      *
      * @return string $result 返回值
@@ -456,7 +456,7 @@ class StringHelper
             $html_array_str = '';
             if ($current_var == '<') { // html 代码开始 
                 $html_tag = 1;
-            } else if ($html_tag == 1) { // 一段 html 代码结束
+            } elseif ($html_tag == 1) { // 一段 html 代码结束
                 if ($current_var == '>') {
                     $html_array_str = trim($html_array_str); //去除首尾空格，如 <br / > < img src="" / > 等可能出现首尾空格
                     if (substr($html_array_str, -1) != '/') { //判断最后一个字符是否为 /，若是，则标签已闭合，不记录
@@ -464,7 +464,7 @@ class StringHelper
                         $f = substr($html_array_str, 0, 1);
                         if ($f == '/') {
                             $html_array['right'][] = str_replace('/', '', $html_array_str); // 去掉 '/' 
-                        } else if ($f != '?') { // 若是?，则为 PHP 代码，跳过
+                        } elseif ($f != '?') { // 若是?，则为 PHP 代码，跳过
                             // 若有半角空格，以空格分割，第一个单元为 html 标签。如：<h2 class="a"> <p class="a"> 
                             if (strpos($html_array_str, ' ') !== false) {
                                 // 分割成2个单元，可能有多个空格，如：<h2 class="" id=""> 

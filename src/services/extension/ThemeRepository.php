@@ -8,79 +8,138 @@
 namespace EngineCore\services\extension;
 
 use EngineCore\Ec;
-use EngineCore\extension\repository\CategoryRepositoryInterface;
-use EngineCore\extension\Repository\ThemeRepositoryInterface;
-use EngineCore\extension\Repository\ThemeRepository as Repository;
-use EngineCore\extension\ThemeInfo;
+use EngineCore\enums\StatusEnum;
+use EngineCore\extension\repository\models\ThemeModelInterface;
+use EngineCore\extension\repository\info\ThemeInfo;
+use Exception;
+use Yii;
+use yii\base\InvalidConfigException;
 
 /**
  * 主题仓库管理服务类
  *
- * @property ThemeRepositoryInterface $repository
- * @property string                   $currentTheme 当前主题名，只读属性
- * @property array                    $allActiveTheme 所有激活的主题，只读属性
+ * @property string                                   $currentTheme   当前主题名，只读属性
+ * @property array                                    $allActiveTheme 所有激活的主题，只读属性
+ * @property \yii\db\ActiveRecord|ThemeModelInterface $model
  *
  * @author E-Kevin <e-kevin@qq.com>
  */
 class ThemeRepository extends BaseCategoryRepository
 {
     
-    /**
-     * @var string 扩展信息类
-     */
     protected $extensionInfo = ThemeInfo::class;
     
-    private $_repository;
+    private $_model;
     
     /**
-     * 获取扩展仓库，主要由该仓库处理一些和数据库结构相关的业务逻辑
-     *
-     * @inheritdoc
-     * @return ThemeRepositoryInterface
+     * {@inheritdoc}
+     * @return \yii\db\ActiveRecord|ThemeModelInterface
      */
-    public function getRepository(): CategoryRepositoryInterface
+    public function getModel(): ThemeModelInterface
     {
-        if (null === $this->_repository) {
-            $this->setRepository(Repository::class);
+        if (null === $this->_model) {
+            throw new InvalidConfigException(get_class($this) . ' - The `model` property must be set.');
         }
         
-        return $this->_repository;
+        return $this->_model;
     }
     
     /**
-     * 设置扩展仓库
-     *
-     * @param string|array|callable $config
+     * {@inheritdoc}
      */
-    public function setRepository($config)
+    public function setModel($config = [])
     {
-        $this->_repository = Ec::createObject($config, [], ThemeRepositoryInterface::class);
+        $this->_model = Ec::createObject($config, [], ThemeModelInterface::class);
     }
     
     /**
-     * 获取当前主题名
-     *
-     * @return string
+     * {@inheritdoc}
      */
-    public function getCurrentTheme(): string
+    public function hasModel(): bool
     {
-        return $this->getRepository()->getCurrentTheme();
+        return null !== $this->_model;
+    }
+    
+    private $_currentTheme;
+    
+    /**
+     * 获取当前主题
+     *
+     * @param bool $throwException
+     *
+     * @return ThemeInfo|object
+     * @throws Exception
+     */
+    public function getCurrentTheme($throwException = true)
+    {
+        if (null === $this->_currentTheme) {
+            $uniqueName = $this->getModel()->getCurrentUniqueName();
+            $this->_currentTheme = $this->getConfigurationByApp()[$uniqueName];
+            if (null === $this->_currentTheme && $throwException) {
+                throw new Exception('The active theme does not exist for the current application.');
+            }
+        }
+        
+        return $this->_currentTheme;
     }
     
     /**
      * 获取所有激活的主题
      *
      * 注意：
-     * 必须返回以扩展名为索引格式的数组
+     * 必须返回以应用名为索引格式的数组
      *
      * @return array
      * [
-     *  {uniqueName} => [],
+     *  {app} => [],
      * ]
      */
     public function getAllActiveTheme(): array
     {
-        return $this->getRepository()->getAllActiveTheme();
+        return $this->getModel()->getAllActiveTheme();
+    }
+    
+    /**
+     * {@inheritdoc}
+     *
+     * @return \EngineCore\extension\repository\models\Theme|null|\yii\db\ActiveRecord
+     */
+    public function findOne(string $uniqueName, $app = null)
+    {
+        $app = $app ?: Yii::$app->id;
+        $configuration = $this->getConfigurationByApp(false, $app);
+        if (!isset($configuration[$uniqueName])) {
+            return null;
+        }
+        
+        /** @var ThemeInfo $infoInstance */
+        $infoInstance = $configuration[$uniqueName];
+        $model = $this->getModel()->findByUniqueName($uniqueName, $app);
+        if (null === $model) {
+            $model = $this->getModel()->loadDefaultValues();
+            // 根据扩展配置信息构建模型基础数据
+            $model->setAttributes([
+                'unique_id'   => $infoInstance->getUniqueId(),
+                'unique_name' => $uniqueName,
+                'theme_id'    => $infoInstance->getId(),
+                'status'      => StatusEnum::STATUS_ON,
+                'app'         => $app,
+            ]);
+        }
+        
+        $model->setInfoInstance($infoInstance);
+        
+        return $model;
+    }
+    
+    /**
+     * {@inheritdoc}
+     */
+    public function configureInfo($info, $config = [])
+    {
+        Yii::configure($info, [
+            'id' => $config['theme_id'],
+        ]);
     }
     
 }

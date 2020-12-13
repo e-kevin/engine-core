@@ -8,7 +8,7 @@
 namespace EngineCore\web\dispatches;
 
 use EngineCore\{
-    db\ActiveRecord, traits\LoadModelTrait, Ec
+    base\LoadModelTrait, db\ActiveRecord, Ec
 };
 
 /**
@@ -22,7 +22,7 @@ class DeleteOne extends Delete
     use LoadModelTrait;
     
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function run($id)
     {
@@ -37,7 +37,7 @@ class DeleteOne extends Delete
             } else {
                 return $model->delete();
             }
-        }), $model->_result);
+        }));
     }
     
 }

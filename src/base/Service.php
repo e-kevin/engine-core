@@ -16,12 +16,13 @@ use yii\base\InvalidConfigException;
 /**
  * 系统服务类
  *
- * @property string    $uniqueId 服务ID
- * @property mixed     $info 服务执行后的相关信息
- * @property mixed     $data 服务执行后的相关数据
- * @property array     $result 服务执行后的结果数据
+ * @property string    $uniqueId      服务ID
+ * @property bool      $status        服务执行后的状态
+ * @property mixed     $info          服务执行后的相关信息
+ * @property mixed     $data          服务执行后的相关数据
+ * @property array     $result        服务执行后的结果数据
  * @property int|false $cacheDuration 缓存时间间隔
- * @property Service[] $services 服务配置或已经实例化的服务实例列表数据
+ * @property Service[] $services      服务配置或已经实例化的服务实例列表数据
  *
  * @author E-Kevin <e-kevin@qq.com>
  */
@@ -42,6 +43,7 @@ class Service extends Component
      * @var Service[] 已经实例化的服务
      */
     private $_services = [];
+    
     /**
      * @var array 服务配置数据
      */
@@ -73,7 +75,7 @@ class Service extends Component
     protected $mustBeSetProps = [];
     
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function __construct(array $config = [])
     {
@@ -89,7 +91,7 @@ class Service extends Component
     }
     
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function init()
     {
@@ -153,7 +155,7 @@ class Service extends Component
      *
      * @param bool $returnDefinitions 是否返回服务配置，默认只返回服务配置定义列表
      *
-     * @return array
+     * @return array|Service[]
      */
     public function getServices($returnDefinitions = true)
     {
@@ -180,7 +182,7 @@ class Service extends Component
     public function setServices($services)
     {
         foreach ($services as $id => $service) {
-            $this->set($id, $service);
+            $this->setService($id, $service);
         }
     }
     
@@ -191,9 +193,9 @@ class Service extends Component
      * @param bool   $checkInstance 是否从已经实例化的服务列表里检索，默认为'false'，只检索是否存在服务配置
      *
      * @return bool
-     * @see set()
+     * @see setService()
      */
-    public function has($id, $checkInstance = false)
+    public function hasService($id, $checkInstance = false)
     {
         return $checkInstance ? isset($this->_services[$id]) : isset($this->_definitions[$id]);
     }
@@ -202,14 +204,14 @@ class Service extends Component
      * 获取指定服务ID的实例
      *
      * @param string $id 服务ID
-     * @param bool   $throwException 是否抛出异常，默认为'true'，抛出
+     * @param bool   $throwException 是否抛出异常，默认为'true'，抛出异常
      *
      * @return Service|null
      * @throws InvalidConfigException 如果服务ID没有被注册，则抛出异常
-     * @see has()
-     * @see set()
+     * @see hasService()
+     * @see setService()
      */
-    public function get($id, $throwException = true)
+    public function getService($id, $throwException = true)
     {
         if (isset($this->_services[$id])) {
             return $this->_services[$id];
@@ -218,23 +220,23 @@ class Service extends Component
         if (isset($this->_definitions[$id])) {
             $definition = $this->_definitions[$id];
             if (is_object($definition) && !$definition instanceof Closure) {
-                $this->_services[$id] = $definition;
+                $service = $definition;
             } else {
-                $this->_services[$id] = Yii::createObject(array_merge($definition, [
-                    'service' => $this, // 设置父级服务类
-                ]));
+                $service = Yii::createObject($definition);
             }
-            $uniqueId = $this->service ? $this->service->getUniqueId() . '/' . $id : $id;
-            if (!$this->_services[$id] instanceof Service) {
-                throw new InvalidConfigException("The required sub service component `{$uniqueId}` must return an object extends `" . Service::class . '`.');
+            if (!$service instanceof Service) {
+                throw new InvalidConfigException(get_called_class() . ": The required sub service component `{$id}` must return an object extends `" . Service::class . '`.');
             }
             
+            // 设置父级服务类
+            $service->service = $this;
             // 设置服务ID，子服务必须设置服务ID，便于调试
-            $this->_services[$id]->setUniqueId($id);
+            $service->setUniqueId($id);
+            $uniqueId = $this->getUniqueId() . '/' . $id;
             
             Yii::debug('Loading sub service: ' . $uniqueId, __METHOD__);
             
-            return $this->_services[$id];
+            return $this->_services[$id] = $service;
         } elseif ($throwException) {
             throw new InvalidConfigException("The Service:`{$this->getUniqueId()}` required sub service component `{$id}` is not found.");
         }
@@ -250,7 +252,7 @@ class Service extends Component
      *
      * @throws InvalidConfigException
      */
-    public function set($id, $definition)
+    public function setService($id, $definition)
     {
         unset($this->_services[$id]);
         
@@ -273,6 +275,16 @@ class Service extends Component
         } else {
             throw new InvalidConfigException("Unexpected configuration type for the \"$id\" service: " . gettype($definition));
         }
+    }
+    
+    /**
+     * 服务执行后的状态
+     *
+     * @return bool
+     */
+    public function getStatus()
+    {
+        return $this->_status;
     }
     
     /**
@@ -353,23 +365,23 @@ class Service extends Component
     }
     
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function __get($name)
     {
-        if ($this->has($name)) {
-            return $this->get($name);
+        if ($this->hasService($name)) {
+            return $this->getService($name);
         }
         
         return parent::__get($name);
     }
     
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function __isset($name)
     {
-        if ($this->has($name)) {
+        if ($this->hasService($name)) {
             return true;
         }
         

@@ -27,13 +27,13 @@ class Menu extends Service
         PAGE_SERVICE = 'page'; // 视图页面服务类
     
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function coreServices()
     {
         return [
-            self::CONFIG_SERVICE => ['class' => '\EngineCore\services\menu\ConfigService'],
-            self::PAGE_SERVICE   => ['class' => '\EngineCore\services\menu\PageService'],
+            self::CONFIG_SERVICE => ['class' => 'EngineCore\services\menu\Config'],
+            self::PAGE_SERVICE   => ['class' => 'EngineCore\services\menu\Page'],
         ];
     }
     
@@ -44,7 +44,7 @@ class Menu extends Service
      */
     public function getConfig()
     {
-        return $this->get(self::CONFIG_SERVICE);
+        return $this->getService(self::CONFIG_SERVICE);
     }
     
     /**
@@ -54,7 +54,7 @@ class Menu extends Service
      */
     public function getPage()
     {
-        return $this->get(self::PAGE_SERVICE);
+        return $this->getService(self::PAGE_SERVICE);
     }
     
 }

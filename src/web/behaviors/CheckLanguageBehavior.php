@@ -23,7 +23,7 @@ class CheckLanguageBehavior extends Behavior
     public $languageParam = '_lang';
     
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function events()
     {

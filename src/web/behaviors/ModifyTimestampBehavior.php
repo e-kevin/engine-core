@@ -152,7 +152,7 @@ class ModifyTimestampBehavior extends TimestampBehavior
     ];
     
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function evaluateAttributes($event)
     {

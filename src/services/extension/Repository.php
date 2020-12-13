@@ -8,10 +8,14 @@
 namespace EngineCore\services\extension;
 
 use EngineCore\Ec;
-use EngineCore\extension\ExtensionInfo;
-use EngineCore\services\extension\repository\configuration\ConfigurationFinderInterface;
+use EngineCore\extension\repository\configuration\Configuration;
+use EngineCore\extension\repository\info\ControllerInfo;
+use EngineCore\extension\repository\info\ExtensionInfo;
+use EngineCore\extension\repository\configuration\ConfigurationFinderInterface;
+use EngineCore\extension\repository\info\ModularityInfo;
+use EngineCore\extension\repository\info\ThemeInfo;
+use EngineCore\helpers\ArrayHelper;
 use EngineCore\services\Extension;
-use EngineCore\helpers\StringHelper;
 use EngineCore\base\Service;
 use yii\base\InvalidConfigException;
 
@@ -19,7 +23,6 @@ use yii\base\InvalidConfigException;
  * 扩展仓库管理服务类，主要管理所有扩展分类的本地和数据库数据
  *
  * @property ConfigurationFinderInterface $finder
- * @property array                        $aliases
  * @property array                        $localConfiguration
  * @property array                        $dbConfiguration
  * @property array                        $installed
@@ -39,57 +42,117 @@ class Repository extends Service implements RepositoryInterface
      */
     public function clearCache()
     {
+        Ec::$service->getSystem()->getCache()->getComponent()->delete([
+            ConfigurationFinderInterface::CACHE_LOCAL_EXTENSION_CONFIGURATION,
+            'all',
+        ]);
+        $this->_localConfiguration = $this->_dbConfiguration = $this->_configurationByApp = null;
         $this->service->getControllerRepository()->clearCache();
         $this->service->getThemeRepository()->clearCache();
         $this->service->getModularityRepository()->clearCache();
     }
     
-    /**
-     * 生成所有扩展【系统扩展、开发者扩展】的别名配置信息
-     *
-     * @return array
-     */
-    public function getAliases(): array
-    {
-        $aliases = [];
-        foreach ($this->getFinder()->getConfigFiles() as $uniqueName => $config) {
-            $namespace = '@' . str_replace('\\', '/', rtrim($config['autoload']['psr-4']['namespace'], '\\'));
-            $aliases[$namespace] = $config['autoload']['psr-4']['path'];
-        }
-        // 添加开发者目录别名
-        foreach ($aliases as $alias => $path) {
-            $aliases[StringHelper::replace($alias, 'extensions', 'developer')] = StringHelper::replace(
-                $path, 'extensions', 'developer'
-            );
-        }
-        
-        return $aliases;
-    }
+    private $_localConfiguration;
     
     /**
-     * 获取【所有】扩展的配置数据，以数据库信息为准
-     *
-     * @return array
-     * ```php
-     * [
-     *  {uniqueName} => [
-     *      'class' => {class}, // 主题扩展不存在该项
-     *      'infoInstance' => {infoInstance},
-     *      'data' => [], // 数据库配置数据
-     *  ],
-     * ]
-     * ```
+     * {@inheritdoc}
      */
     public function getLocalConfiguration(): array
     {
-        return array_merge(
+        if (null === $this->_localConfiguration) {
+            $this->_localConfiguration = Ec::$service->getSystem()->getCache()->getOrSet(
+                [
+                    ConfigurationFinderInterface::CACHE_LOCAL_EXTENSION_CONFIGURATION,
+                    'all',
+                ],
+                function () {
+                    $arr = [];
+                    foreach ($this->service->getRepository()->getFinder()->getConfiguration() as $uniqueName =>
+                             $configuration) {
+                        foreach ($configuration->getApp() as $app) {
+                            if (isset($this->getDbConfiguration()[$app][$uniqueName])) {
+                                $config = $this->getDbConfiguration()[$app][$uniqueName][0];
+                                $infoInstance = $this->getInfoInstance($uniqueName, $app);
+                                switch (true) {
+                                    case is_subclass_of($infoInstance, ControllerInfo::class):
+                                        $this->service->getControllerRepository()->configureInfo($infoInstance, $config);
+                                        break;
+                                    case is_subclass_of($infoInstance, ModularityInfo::class):
+                                        $this->service->getModularityRepository()->configureInfo($infoInstance, $config);
+                                        break;
+                                    case is_subclass_of($infoInstance, ThemeInfo::class):
+                                        $this->service->getThemeRepository()->configureInfo($infoInstance, $config);
+                                        break;
+                                }
+                                $arr[$app][$uniqueName] = $infoInstance;
+                            } else {
+                                $arr[$app][$uniqueName] = $this->getInfoInstance($uniqueName, $app);
+                            }
+                        }
+                    }
+                    
+                    return $arr;
+                }, $this->getCacheDuration());
+        }
+        
+        return $this->_localConfiguration;
+    }
+    
+    private $_dbConfiguration;
+    
+    /**
+     * {@inheritdoc}
+     */
+    public function getDbConfiguration(): array
+    {
+        if (null == $this->_dbConfiguration) {
+            $this->_dbConfiguration = ArrayHelper::merge(
+            // 已经安装的控制器扩展
+                $this->service->getControllerRepository()->getDbConfiguration(),
+                // 已经安装的模块扩展
+                $this->service->getModularityRepository()->getDbConfiguration(),
+                // 已经安装的主题扩展
+                $this->service->getThemeRepository()->getDbConfiguration()
+            );
+        }
+        
+        return $this->_dbConfiguration;
+    }
+    
+    /**
+     * {@inheritdoc}
+     */
+    public function getInstalledConfiguration(): array
+    {
+        return ArrayHelper::merge(
         // 已经安装的控制器扩展
-            $this->service->getControllerRepository()->getLocalConfiguration(),
+            $this->service->getControllerRepository()->getInstalledConfiguration(),
             // 已经安装的模块扩展
-            $this->service->getModularityRepository()->getLocalConfiguration(),
+            $this->service->getModularityRepository()->getInstalledConfiguration(),
             // 已经安装的主题扩展
-            $this->service->getThemeRepository()->getLocalConfiguration()
+            $this->service->getThemeRepository()->getInstalledConfiguration()
         );
+    }
+    
+    private $_configurationByApp;
+    
+    /**
+     * {@inheritdoc}
+     */
+    public function getConfigurationByApp($installed = false, $app = null)
+    {
+        if (!isset($this->_configurationByApp[$installed][$app])) {
+            $this->_configurationByApp[$installed][$app] = array_merge(
+            // 已经安装的控制器扩展
+                $this->service->getControllerRepository()->getConfigurationByApp($installed, $app),
+                // 已经安装的模块扩展
+                $this->service->getModularityRepository()->getConfigurationByApp($installed, $app),
+                // 已经安装的主题扩展
+                $this->service->getThemeRepository()->getConfigurationByApp($installed, $app)
+            );
+        }
+        
+        return $this->_configurationByApp[$installed][$app];
     }
     
     private $_finder;
@@ -105,94 +168,70 @@ class Repository extends Service implements RepositoryInterface
         if (null === $this->_finder) {
             throw new InvalidConfigException('The `finder` property must be set.');
         }
-        $this->_finder;
+        
+        return $this->_finder;
     }
     
     /**
      * 设置扩展配置文件搜索器
      *
      * @param string|array|callable $finder
-     *
-     * @return self
      */
     public function setFinder($finder)
     {
         $this->_finder = Ec::createObject($finder, [], ConfigurationFinderInterface::class);
-        
-        return $this;
     }
     
     /**
-     * 获取所有【已安装】的扩展的数据库配置数据，包括控制器、模块和主题扩展
+     * 获取指定的扩展信息类
      *
-     * @return array
-     * [
-     *  {uniqueName} => [],
-     * ]
-     */
-    public function getInstalled(): array
-    {
-        return array_merge(
-        // 已经安装的控制器扩展
-            $this->service->getControllerRepository()->getInstalled(),
-            // 已经安装的模块扩展
-            $this->service->getModularityRepository()->getInstalled(),
-            // 已经安装的主题扩展
-            $this->service->getThemeRepository()->getInstalled()
-        );
-    }
-    
-    /**
-     * 获取所有【已安装】的扩展的配置数据
-     *
-     * @return array
-     * ```php
-     * [
-     *  {uniqueName} => [
-     *      'class' => {class}, // 主题扩展不存在该项
-     *      'infoInstance' => {infoInstance},
-     *      'data' => [], // 数据库配置数据
-     *  ],
-     * ]
-     * ```
-     */
-    public function getDbConfiguration(): array
-    {
-        return array_merge(
-        // 已经安装的控制器扩展
-            $this->service->getControllerRepository()->getDbConfiguration(),
-            // 已经安装的模块扩展
-            $this->service->getModularityRepository()->getDbConfiguration(),
-            // 已经安装的主题扩展
-            $this->service->getThemeRepository()->getDbConfiguration()
-        );
-    }
-    
-    /**
-     * 获取指定应用【所有|已安装】扩展的配置数据
-     *
-     * @param bool   $installed
+     * @param string $uniqueName
      * @param string $app
      *
-     * @return array
-     * [
-     *  {uniqueName} => [
-     *      'class' => {class}, // 主题扩展不存在该项
-     *      'infoInstance' => {infoInstance},
-     *      'data' => [], // 数据库配置数据
-     *  ],
-     * ]
+     * @return ExtensionInfo|null|object
      */
-    public function getConfigurationByApp($installed = false, $app = null): array
+    public function getInfoInstance($uniqueName, $app)
     {
-        return array_merge(
-        // 已经安装的控制器扩展
-            $this->service->getControllerRepository()->getConfigurationByApp($installed, $app),
-            // 已经安装的模块扩展
-            $this->service->getModularityRepository()->getConfigurationByApp($installed, $app),
-            // 已经安装的主题扩展
-            $this->service->getThemeRepository()->getConfigurationByApp($installed, $app)
-        );
+        $configuration = $this->getConfiguration($uniqueName, false);
+        if (null === $configuration) {
+            return null;
+        }
+        try {
+            // 多个命名空间，默认把第一个视为主命名空间
+            $autoload = $configuration->autoloadPsr4[0] ?? [];
+            $infoInstance = Ec::createObject([
+                'class' => $autoload['namespace'] . 'Info', // 扩展信息类
+            ], [
+                $app,
+                $configuration->getName(),
+            ], ExtensionInfo::class);
+        } catch (\Exception $e) {
+            $infoInstance = null;
+        }
+        
+        return $infoInstance;
+    }
+    
+    /**
+     * 获取指定扩展的配置文件的配置数据
+     *
+     * @param string $uniqueName
+     * @param bool   $throwException
+     *
+     * @return Configuration|null
+     * @throws InvalidConfigException
+     */
+    public function getConfiguration($uniqueName, $throwException = true)
+    {
+        if (!isset($this->getFinder()->getConfiguration()[$uniqueName])) {
+            if ($throwException) {
+                throw new InvalidConfigException('The repository `' . $uniqueName . '` is not found.');
+            } else {
+                return null;
+            }
+        }
+        
+        return $this->getFinder()->getConfiguration()[$uniqueName];
     }
     
     /**
@@ -204,7 +243,7 @@ class Repository extends Service implements RepositoryInterface
      * ```php
      * [
      *  {category} => [
-     *      {extensionUniqueName},
+     *      {uniqueName},
      *      ...,
      *  ]
      * ]
@@ -213,13 +252,12 @@ class Repository extends Service implements RepositoryInterface
     public function getListGroupByCategory($installed = true): array
     {
         $arr = [];
-        $configuration = $installed ?
-            $this->getDbConfiguration() :
-            $this->getLocalConfiguration();
-        foreach ($configuration as $uniqueName => $config) {
+        $configuration = $installed ? $this->getInstalledConfiguration() : $this->getLocalConfiguration();
+        foreach ($configuration as $app => $row) {
             /** @var ExtensionInfo $infoInstance */
-            $infoInstance = $config['infoInstance'];
-            $arr[$infoInstance->getCategory() ?: ExtensionInfo::CATEGORY_NONE][] = $uniqueName;
+            foreach ($row as $uniqueName => $infoInstance) {
+                $arr[$infoInstance->getCategory()][] = $uniqueName;
+            }
         }
         
         return $arr;
@@ -233,7 +271,7 @@ class Repository extends Service implements RepositoryInterface
      *
      * @return bool
      */
-    public function hasExtensionByCategory(string $category, $installed = true): bool
+    public function existsByCategory(string $category, $installed = true): bool
     {
         return isset($this->getListGroupByCategory($installed)[$category]);
     }

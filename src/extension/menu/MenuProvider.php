@@ -45,7 +45,7 @@ class MenuProvider extends BaseObject implements MenuProviderInterface
     private $_allGroupByLevel;
     
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function getAll($level = null): array
     {
@@ -86,7 +86,7 @@ class MenuProvider extends BaseObject implements MenuProviderInterface
     }
     
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function clearCache()
     {
@@ -94,7 +94,7 @@ class MenuProvider extends BaseObject implements MenuProviderInterface
     }
     
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function getModel()
     {
@@ -106,7 +106,7 @@ class MenuProvider extends BaseObject implements MenuProviderInterface
     }
     
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function setModel($config = [])
     {
@@ -117,7 +117,7 @@ class MenuProvider extends BaseObject implements MenuProviderInterface
     }
     
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function getMenuConfig()
     {
@@ -129,7 +129,7 @@ class MenuProvider extends BaseObject implements MenuProviderInterface
     }
     
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function setMenuConfig($config = [])
     {

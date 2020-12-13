@@ -22,7 +22,7 @@ class YesEnum extends Enums
         YES = 1;
     
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     protected static function _list(): array
     {

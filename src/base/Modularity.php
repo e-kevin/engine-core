@@ -25,7 +25,7 @@ class Modularity extends Module
     /**
      * 更改默认路由是为了防止在系统使用调度服务时调度器命名空间不支持`default|public`等字符时的问题
      *
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public $defaultRoute = 'common';
     
@@ -35,7 +35,7 @@ class Modularity extends Module
     public $dispatchNamespace;
     
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function init()
     {
@@ -44,6 +44,8 @@ class Modularity extends Module
             $this->dispatchNamespace = StringHelper::replace($this->controllerNamespace, 'controllers', 'dispatches');
         }
     }
+    
+    private $_service;
     
     /**
      * 获取服务定位器，用于管理模块内的服务组件
@@ -70,7 +72,5 @@ class Modularity extends Module
     {
         $this->_service = Ec::createObject($serviceLocator, [], ServiceLocator::class);
     }
-    
-    private $_service;
     
 }

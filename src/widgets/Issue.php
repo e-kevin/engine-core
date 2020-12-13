@@ -24,18 +24,22 @@ class Issue extends Widget
      * @var \yii\base\Controller 上下文控制器
      */
     public $context;
-
+    
     public function init()
     {
         parent::init();
-    
+        
         /** @var RunningExtensionInterface $runningExtension */
         $runningExtension = Ec::getRunningExtension($this->context ?? Yii::$app->controller);
-        $issueUrl = $runningExtension->getInfo()->getIssueUrl() ?: $runningExtension->defaultExtension()->getInfo()->getIssueUrl();
-
+        $config = $runningExtension->getInfo()->getConfiguration();
+        $issueUrl = $config->getSupport()->getIssues();
+        if (empty($issueUrl) && strpos($config->getHomepage(), 'github.com') !== false) {
+            $issueUrl = $config->getHomepage() . '/issues';
+        }
+        
         echo $this->render('@EngineCore/views/_issue-message', [
             'issueUrl' => $issueUrl,
         ]);
     }
-
+    
 }

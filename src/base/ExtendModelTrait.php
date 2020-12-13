@@ -8,7 +8,6 @@
 namespace EngineCore\base;
 
 use EngineCore\Ec;
-use EngineCore\helpers\ArrayHelper;
 use Exception;
 use Yii;
 
@@ -16,14 +15,17 @@ use Yii;
  * Class ExtendModelTrait
  * 扩展模型功能
  *
- * @property int|false $cacheDuration
- * @property boolean   $throwException
- * @property array     $all
+ * @property int|false                         $cacheDuration
+ * @property boolean                           $throwException
+ * @property array                             $all
+ * @property \EngineCore\services\system\Error $errorService
  *
  * @author E-Kevin <e-kevin@qq.com>
  */
 trait ExtendModelTrait
 {
+    
+    protected $_throwException;
     
     /**
      * 获取是否允许抛出异常
@@ -66,6 +68,8 @@ trait ExtendModelTrait
     {
     }
     
+    private $_cacheDuration;
+    
     /**
      * 获取缓存时间间隔
      *
@@ -95,31 +99,56 @@ trait ExtendModelTrait
     }
     
     /**
-     * 储存验证后的错误信息
+     * {@inheritdoc}
+     * 添加对模型外其它错误信息的判断
+     */
+    public function hasErrors($attribute = null)
+    {
+        $has = parent::hasErrors($attribute);
+        if (!$has) {
+            $has = $this->getErrorService()->hasModelOtherErrors();
+        }
+        
+        return $has;
+    }
+    
+    /**
+     * 处理验证后的错误信息
      * @throws Exception
      */
     public function afterValidate()
     {
         parent::afterValidate();
         if ($this->hasErrors()) {
-            // 格式化信息数组
-            $errors = $this->getFirstErrors();
-            if (count($errors) > 1) {
-                $i = 1;
-                foreach ($errors as &$value) {
-                    $value = $i++ . ') ' . $value;
-                }
-            }
+            $errorService = $this->getErrorService();
+            /**
+             * 储存Model错误信息，交由调度响应器处理呈现问题
+             * @see \EngineCore\services\system\Error::addModelOtherErrors() 描述
+             */
+            $errorService->addModelErrors($this->getErrors(), get_called_class(), __METHOD__);
             /**
              * 添加事务支持
              *
-             * 如果存在事务操作且事务内的模型启用抛出异常，则把获取到的错误信息以异常方式抛出，
-             * 否则可通过`$_result`属性获取相关执行结果信息。
+             * 通常在事务过程中，如果事务内的某个模型存在错误信息（验证出错等），因为错误信息储存
+             * 在[[Model::$errors]]属性里，并未触发异常，将会导致该模型方法被中断后事务依然继续执行。
+             * 面对这种情况，除了自行添加判断外，使用EngineCore对模型的事务异常抛出功能支持可以
+             * 很方便地解决这个问题，非常适用于调试排错。
+             *
+             * 如果事务中的模型方法对业务影响不大，可以忽略不计，则不需要理会。
+             *
+             * 以下是启用方法：
+             * 在需要的模型内，开启抛出异常即可：
+             * ```php
+             *  Model()->setThrowException()->{method};
+             * ```
+             * 事务异常判断优先级查看：
+             * @see _allowThrowException()
              */
-            if (Yii::$app->getDb()->getIsActive() && $this->_throwException()) {
-                throw new Exception(ArrayHelper::arrayToString($errors, ''));
-            } else {
-                $this->_result = ArrayHelper::arrayToString($errors, "</br>");
+            if (null !== Yii::$app->getDb()->getTransaction() && $this->_allowThrowException()) {
+                $errors = parent::hasErrors()
+                    ? $errorService->getModelFirstErrors()
+                    : $errorService->getModelOtherErrors();
+                throw new Exception($errorService->getFormatErrors($errors, "\r\n"));
             }
         }
     }
@@ -129,17 +158,20 @@ trait ExtendModelTrait
      *
      * @return bool
      */
-    private function _throwException()
+    private function _allowThrowException()
     {
         return $this->getThrowException() === true
             || (Ec::getThrowException() && $this->getThrowException() !== false);
     }
     
     /**
-     * @var string 储存反馈数据，如通过模型类向客户端传递执行后的相关信息
+     * 获取错误服务类
+     *
+     * @return \EngineCore\services\system\Error
      */
-    public $_result;
-    protected $_throwException;
-    private $_cacheDuration;
+    public function getErrorService()
+    {
+        return Ec::$service->getSystem()->getError();
+    }
     
 }

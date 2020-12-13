@@ -7,14 +7,16 @@
 
 namespace EngineCore\web;
 
+use EngineCore\Ec;
+use EngineCore\helpers\SessionFlashHelper;
 use Yii;
 use yii\helpers\Url;
 
 /**
  * 调度响应器，用于更改反馈给WEB客户端的表现形式
  *
- * @property int $waitSecond 页面跳转停留时间
- * @property mixed $jumpUrl 页面跳转地址
+ * @property int   $waitSecond 页面跳转停留时间
+ * @property mixed $jumpUrl    页面跳转地址
  *
  * @author E-Kevin <e-kevin@qq.com>
  */
@@ -31,33 +33,33 @@ class DispatchResponse extends \EngineCore\dispatch\DispatchResponse implements 
     public $viewFile;
     
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      * @return \yii\web\Response
      */
-    public function success($message = '', $data = null)
+    public function success($message = '', $url = null)
     {
-        return $this->dispatchJump($message ?: Yii::t('Ec/app', 'Operation successful.'), $data, 1);
+        return $this->dispatchJump($message ?: Yii::t('Ec/app', 'Operation successful.'), $url, 1);
     }
     
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      * @return \yii\web\Response
      */
-    public function error($message = '', $data = null)
+    public function error($message = '', $url = null)
     {
-        return $this->dispatchJump($message ?: Yii::t('Ec/app', 'Operation failure.'), $data, 0);
+        return $this->dispatchJump($message ?: Yii::t('Ec/app', 'Operation failure.'), $url, 0);
     }
     
     /**
      * 处理跳转操作，支持错误跳转和正确跳转。
      *
      * @param string|array $message 提示信息
-     * @param mixed $data 跳转地址，该值设置遵照以下原则：
-     *  - string: 当为字符串时，则自动跳转到该地址。
-     *  - array: 数组形式的路由地址。
-     *  - 空值: 为空时('', [])则跳转到当前请求地址，即刷新当前页面。
-     *  - null: 不跳转。
-     * @param integer $status 状态 1:success 0:error
+     * @param mixed        $url 跳转地址，该值设置遵照以下原则：
+     *                              - string: 当为字符串时，则自动跳转到该地址。
+     *                              - array: 数组形式的路由地址。
+     *                              - 空值: 为空时('', [])则跳转到当前请求地址，即刷新当前页面。
+     *                              - null: 不跳转。
+     * @param integer      $status 状态 1:success 0:error
      *
      * @return \yii\web\Response 默认返回包含以下键名的数据到客户端
      * ```php
@@ -70,7 +72,7 @@ class DispatchResponse extends \EngineCore\dispatch\DispatchResponse implements 
      * ]
      * ```
      */
-    protected function dispatchJump($message = '', $data = [], $status = 1)
+    protected function dispatchJump($message = '', $url, $status = 1)
     {
         $request = Yii::$app->getRequest();
         // 设置跳转时间
@@ -79,23 +81,38 @@ class DispatchResponse extends \EngineCore\dispatch\DispatchResponse implements 
         }
         // 设置跳转地址
         if (null === $this->getJumpUrl()) {
-            $this->setJumpUrl($data);
+            $this->setJumpUrl($url);
         }
         $this->setAssign([
             'status' => $status,
-            'info' => $message,
+            'info'   => $message,
         ]);
-        
+        $errorService = Ec::$service->getSystem()->getError();
         // 全页面加载
         if ($request->getIsPjax() || !$request->getIsAjax()) {
-            // 使用闪存储存信息
-            Yii::$app->getSession()->setFlash($status ? 'success' : 'error', $this->getAssign('info'));
+            if (!$status) {
+                // 存在模型错误信息或错误闪存信息，则不接管响应操作，直接返回，因为ActiveForm会自动赋值错误信息
+                if ($errorService->hasModelErrors() || $errorService->hasFlashErrors()) {
+                    return Yii::$app->getResponse();
+                } elseif ($errorService->hasModelOtherErrors()) { // 存在模型其它错误信息，截取下来反馈给客户端
+                    $this->setAssign('info', $errorService->getFormatErrors($errorService->getModelOtherErrors(), "\r\n"));
+                }
+            }
+            // 使用闪存储存信息，并反馈给客户端
+            SessionFlashHelper::setFlash($status ? 'success' : 'error', $this->getAssign('info'));
             if (null !== $this->getJumpUrl()) {
                 $this->dispatch->controller->redirect($this->getJumpUrl());
                 Yii::$app->end();
             }
         } // AJAX请求方式
         else {
+            if ($errorService->hasModelErrors()) { // 存在模型错误信息，优先反馈给客户端，适用于AJAX请求方式的验证响应
+                $this->setAssign('info', $errorService->getModelFirstErrors());
+            } elseif ($errorService->hasModelOtherErrors()) { // 存在模型其它错误信息，截取下来反馈给客户端
+                $this->setAssign('info', $errorService->getModelOtherErrors());
+            } elseif ($errorService->hasFlashErrors()) { // 存在错误闪存信息，截取下来反馈给客户端，包括error,danger错误信息
+                $this->setAssign('info', SessionFlashHelper::getError(SessionFlashHelper::getDanger()));
+            }
             $this->dispatch->controller->asJson($this->getAssign());
             Yii::$app->end();
         }
@@ -104,7 +121,7 @@ class DispatchResponse extends \EngineCore\dispatch\DispatchResponse implements 
     }
     
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function render($view = null, array $assign = [])
     {
@@ -115,8 +132,7 @@ class DispatchResponse extends \EngineCore\dispatch\DispatchResponse implements 
     }
     
     /**
-     * @inheritdoc
-     * @return self
+     * {@inheritdoc}
      */
     final public function setWaitSecond($second = 3)
     {
@@ -124,7 +140,7 @@ class DispatchResponse extends \EngineCore\dispatch\DispatchResponse implements 
     }
     
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     final public function getWaitSecond()
     {
@@ -136,6 +152,7 @@ class DispatchResponse extends \EngineCore\dispatch\DispatchResponse implements 
      * 该值设置遵照以下原则：
      *  - string: 当为字符串时，则自动跳转到该地址，为空字符串时则跳转到当前请求地址，即刷新当前页面。
      *  - array: 数组形式的路由地址。
+     *  - 空值: 为空时('', [])则跳转到当前请求地址，即刷新当前页面。
      *  - null: 不需要跳转。
      *
      * @param mixed $url
@@ -153,7 +170,7 @@ class DispatchResponse extends \EngineCore\dispatch\DispatchResponse implements 
     }
     
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     final public function getJumpUrl()
     {

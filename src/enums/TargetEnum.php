@@ -22,7 +22,7 @@ class TargetEnum extends Enums
         TARGET_BLANK = 1;
     
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     protected static function _list(): array
     {

@@ -19,23 +19,24 @@ use yii\{
  */
 class TreeHelper
 {
-
+    
     /**
      * 获取数据提供器所有父级ID数据
      *
      * @param ActiveRecord|array $dataProvider 数据提供器
-     * @param integer $currentPid 当前数据的父级ID，从该值开始获取父级ID数据，直到$`rootId`值，
+     * @param integer            $currentPid 当前数据的父级ID，从该值开始获取父级ID数据，直到$`rootId`值，
      * 该值仅在`$dataProvider`为数组类型时生效
-     * @param string $pkField 主键字段
-     * @param string $parentField 父级字段
-     * @param integer $rootId 顶级ID，默认为`0`，返回的父级ID数据获取到此顶级ID后则停止获取
+     * @param string             $pkField 主键字段
+     * @param string             $parentField 父级字段
+     * @param integer            $rootId 顶级ID，默认为`0`，返回的父级ID数据获取到此顶级ID后则停止获取
      *
      * @return array
      * @throws InvalidConfigException
      * @throws NotFoundHttpException
      */
-    public static function getParentIds($dataProvider, int $currentPid = 0, $pkField = 'id', $parentField = 'parent_id', int $rootId = 0)
-    {
+    public static function getParentIds(
+        $dataProvider, int $currentPid = 0, $pkField = 'id', $parentField = 'parent_id', int $rootId = 0
+    ) {
         // 模型数据提供器
         if ($dataProvider instanceof ActiveRecord) {
             foreach ([$pkField, $parentField] as $field) {
@@ -70,8 +71,9 @@ class TreeHelper
         }
     }
     
-    private static function _getParentIdsByArray(array $list, int $currentPid, string $pkField, string $parentField, int $rootId): array
-    {
+    private static function _getParentIdsByArray(
+        array $list, int $currentPid, string $pkField, string $parentField, int $rootId
+    ): array {
         $_parentIds = [];
         if ($list) {
             while ($currentPid !== $rootId) {
@@ -86,8 +88,8 @@ class TreeHelper
         return $_parentIds;
     }
     
-    private static function _getParentIdsByModel(ActiveRecord $model, string $pkField, string $parentField, int $rootId): array
-    {
+    private static function _getParentIdsByModel(ActiveRecord $model, string $pkField, string $parentField, int $rootId
+    ): array {
         $_parentIds = [];
         while ($model !== null) {
             if ($model->$parentField !== $rootId) {
@@ -105,16 +107,16 @@ class TreeHelper
      * 获取数据提供器所有子类ID数据
      *
      * @param ActiveRecord|array $dataProvider 数据提供器
-     * @param integer $currentId 获取该值的所有子类ID数据，为'0'时，表示获取所有顶级数据
-     * @param string $pkField 主键字段
-     * @param string $parentField 父级字段
+     * @param integer            $currentId 获取该值的所有子类ID数据，为'0'时，表示获取所有顶级数据
+     * @param string             $pkField 主键字段
+     * @param string             $parentField 父级字段
      *
      * @return array
      * @throws InvalidConfigException
      * @throws NotFoundHttpException
      */
-    public static function getChildrenIds($dataProvider, int $currentId = 0, $pkField = 'id', $parentField = 'parent_id')
-    {
+    public static function getChildrenIds($dataProvider, int $currentId = 0, $pkField = 'id', $parentField = 'parent_id'
+    ) {
         // 模型数据提供器
         if ($dataProvider instanceof ActiveRecord) {
             foreach ([$pkField, $parentField] as $field) {
@@ -144,8 +146,8 @@ class TreeHelper
         }
     }
     
-    private static function _getChildrenIdsByArray(array $list, int $currentId, string $pkField, string $parentField): array
-    {
+    private static function _getChildrenIdsByArray(array $list, int $currentId, string $pkField, string $parentField
+    ): array {
         $_childrenIds = [];
         if ($list) {
             $children = ArrayHelper::listSearch($list, [
@@ -166,8 +168,9 @@ class TreeHelper
         return $_childrenIds;
     }
     
-    private static function _getChildrenIdsByModel(ActiveRecord $model, int $currentId, string $pkField, string $parentField): array
-    {
+    private static function _getChildrenIdsByModel(
+        ActiveRecord $model, int $currentId, string $pkField, string $parentField
+    ): array {
         $_childrenIds = [];
         $children = $model::findAll([$parentField => $currentId]);
         while (count($children) > 0) {

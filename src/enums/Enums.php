@@ -19,13 +19,16 @@ abstract class Enums implements EnumInterface
 {
     
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public static function list($showUnlimited = false)
     {
-        return $showUnlimited ? array_merge([
-            self::UNLIMITED => Yii::t('Ec/app', 'Unlimited'),
-        ], self::_list()) : self::_list();
+        return $showUnlimited
+            ? ArrayHelper::merge(
+                [EnumInterface::UNLIMITED => Yii::t('Ec/app', 'Unlimited')]
+                , static::_list()
+            )
+            : static::_list();
     }
     
     /**
@@ -39,7 +42,7 @@ abstract class Enums implements EnumInterface
     }
     
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public static function value($key)
     {

@@ -59,39 +59,52 @@ class Delete extends Dispatch
     public $urlParams = [];
     
     /**
-     * @inheritdoc
+     * @var string 操作成功后的提示消息
+     */
+    public $successMessage;
+    
+    /**
+     * @var string 操作失败后的提示消息
+     */
+    public $errorMessage;
+    
+    /**
+     * {@inheritdoc}
      * @throws BadRequestHttpException
      */
     public function init()
     {
-        if (!empty($this->urlParams) && is_string($this->urlParams)) {
-            $params = [];
-            foreach (StringHelper::stringToArray($this->urlParams) as $param) {
-                $params[$param] = Yii::$app->getRequest()->getQueryParam($param);
-                if ($params[$param] === null) {
-                    throw new BadRequestHttpException(Yii::t('yii', 'Missing required parameters: {params}', [
-                        'params' => $param,
-                    ]));
+        if (null !== $this->successJumpUrl || null !== $this->errorJumpUrl) {
+            if (!empty($this->urlParams) && is_string($this->urlParams)) {
+                $params = [];
+                foreach (StringHelper::stringToArray($this->urlParams) as $param) {
+                    $params[$param] = Yii::$app->getRequest()->getQueryParam($param);
+                    if ($params[$param] === null) {
+                        throw new BadRequestHttpException(Yii::t('yii', 'Missing required parameters: {params}', [
+                            'params' => $param,
+                        ]));
+                    }
                 }
+                $this->urlParams = $params;
             }
-            $this->urlParams = $params;
         }
     }
     
     /**
      * @param bool $res
-     * @param string $message
      *
      * @return \yii\web\Response
      */
-    protected function getResult($res, $message = '')
+    protected function getResult($res)
     {
         if ($res) {
-            return $this->response->success($message ?: Yii::t('Ec/app', 'Delete successful.'),
+            return $this->response->success(
+                $this->successMessage ?: Yii::t('Ec/app', 'Delete successful.'),
                 $this->successJumpUrl ? array_merge([$this->successJumpUrl], $this->urlParams) : Yii::$app->getRequest()->getReferrer()
             );
         } else {
-            return $this->response->error($message ?: Yii::t('Ec/app', 'Delete failure.'),
+            return $this->response->error(
+                $this->errorMessage ?: Yii::t('Ec/app', 'Delete failure.'),
                 $this->errorJumpUrl ? array_merge([$this->errorJumpUrl], $this->urlParams) : Yii::$app->getRequest()->getReferrer()
             );
         }

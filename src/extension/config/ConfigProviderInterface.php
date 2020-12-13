@@ -31,21 +31,6 @@ interface ConfigProviderInterface
     const WEB_SITE_KEYWORD = 'WEB_SITE_KEYWORD';
     
     /**
-     * @var string 网站ICP
-     */
-    const WEB_SITE_ICP = 'WEB_SITE_ICP';
-    
-    /**
-     * @var string 关闭网站
-     */
-    const WEB_SITE_CLOSE = 'WEB_SITE_CLOSE';
-    
-    /**
-     * @var string 关闭网站提示语
-     */
-    const WEB_SITE_CLOSE_TIPS = 'WEB_SITE_CLOSE_TIPS';
-    
-    /**
      * @var int 字符串类型
      */
     const TYPE_STRING = 1;

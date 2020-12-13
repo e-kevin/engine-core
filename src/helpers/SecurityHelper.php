@@ -87,7 +87,7 @@ class SecurityHelper
      * 系统解密方法
      *
      * @param string $data 要解密的字符串
-     * @param string $key 加密密钥
+     * @param string $key  加密密钥
      *
      * @return string
      */
@@ -133,8 +133,8 @@ class SecurityHelper
     /**
      * 系统加密方法
      *
-     * @param string $data 要加密的字符串
-     * @param string $key 加密密钥
+     * @param string  $data   要加密的字符串
+     * @param string  $key    加密密钥
      * @param integer $expire 过期时间 单位 秒
      *
      * @return string

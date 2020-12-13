@@ -7,8 +7,12 @@
 
 namespace EngineCore\extension;
 
+use EngineCore\Ec;
+use EngineCore\extension\repository\info\EngineCoreInfo;
+use Yii;
+
 /**
- * EngineCore核心构架扩展
+ * EngineCore核心框架扩展
  *
  * @author E-Kevin <e-kevin@qq.com>
  */
@@ -16,29 +20,16 @@ class EngineCoreExtension extends BaseRunningExtension
 {
     
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function getInfo()
     {
-        return $this->defaultExtension();
-    }
-    
-    /**
-     * @inheritdoc
-     */
-    public function getDbConfig(): array
-    {
-        return [
-            'run' => ExtensionInfo::RUN_MODULE_EXTENSION,
-        ];
-    }
-    
-    /**
-     * @inheritdoc
-     */
-    public function getExtensionUniqueName(): string
-    {
-        return $this->getInfo()->getUniqueName();
+        $configuration = Ec::$service->getExtension()->getRepository()->getFinder()
+                                     ->getConfigurationByFile(Yii::getAlias('@vendor/e-kevin/engine-core/composer.json'));
+        
+        return Yii::createObject(EngineCoreInfo::class, [
+            $configuration,
+        ]);
     }
     
 }

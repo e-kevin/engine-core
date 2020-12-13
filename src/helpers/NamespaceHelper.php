@@ -43,7 +43,7 @@ class NamespaceHelper
      *
      * @param string $namespace 命名空间
      *
-     * @return int|null|string 别名键值
+     * @return int|null|string 别名键名
      */
     public static function getAliasesKeyByNamespace($namespace)
     {

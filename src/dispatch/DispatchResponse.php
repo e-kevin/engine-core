@@ -35,20 +35,10 @@ abstract class DispatchResponse extends BaseObject implements DispatchResponseIn
         parent::__construct($config);
     }
     
-    /**
-     * @inheritdoc
-     */
-    abstract public function success($message = '', $data = null);
-    
-    /**
-     * @inheritdoc
-     */
-    abstract public function error($message = '', $data = null);
-    
     private $_assign = [];
     
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     final public function setAssign($key, $value = null)
     {
@@ -62,7 +52,7 @@ abstract class DispatchResponse extends BaseObject implements DispatchResponseIn
     }
     
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     final public function getAssign($key = null, $defaultValue = null)
     {

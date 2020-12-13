@@ -28,12 +28,12 @@ class SimpleParser extends BaseObject implements DispatchConfigParserInterface
     /**
      * SimpleParser constructor.
      *
-     * @param BaseDispatchManager $dispatchManager
-     * @param array               $config
+     * @param AbstractDispatchManager $dispatchManager
+     * @param array                   $config
      *
      * @author E-Kevin <e-kevin@qq.com>
      */
-    public function __construct(BaseDispatchManager $dispatchManager, array $config = [])
+    public function __construct(AbstractDispatchManager $dispatchManager, array $config = [])
     {
         $this->dm = $dispatchManager;
         parent::__construct($config);
