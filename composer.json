@@ -18,6 +18,7 @@
     "php": ">=7.0",
     "yiisoft/yii2": "~2.0.17",
     "rmrevin/yii2-fontawesome": "~2.9",
+    "engine-core/installer-plugin": "~1.0.0",
     "jelix/version": "~1.0.1",
     "ocramius/package-versions": "~1.2.0"
   },
