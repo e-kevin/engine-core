@@ -184,6 +184,7 @@ class Dependent extends Service
      *  获取指定扩展的依赖状态
      *
      * @param array  $extensions 扩展数据
+     * @see normalize()
      * ```php
      * [
      *  'engine-core/theme-bootstrap-v3' => [

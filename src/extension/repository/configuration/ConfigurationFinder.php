@@ -193,7 +193,7 @@ abstract class ConfigurationFinder extends BaseObject implements ConfigurationFi
     protected function getVersion($name)
     {
         /*
-         * EngineCore默认使用'e-kevin/ec-installer-plugin' composer插件安装ec扩展，
+         * EngineCore默认使用'engine-core/installer-plugin' composer插件安装ec扩展，
          * 故扩展具体版本可从已安装的composer列表中获取。
          */
         return Ec::$service->getSystem()->getVersion()->getComposerVersion($name) ?: 'dev-main';

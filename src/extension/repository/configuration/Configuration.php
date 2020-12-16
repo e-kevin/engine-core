@@ -373,18 +373,25 @@ class Configuration extends BaseObject
     public function getExtensionDependencies()
     {
         $dependencies = [];
-        $require = $this->getExtraConfig()['require'] ?? [];
-        foreach ($require as $app => $value) {
+        $composerRequire = $this->getComposerDependencies();
+        $extensionRequire = $this->getExtraConfig()['require'] ?? [];
+        foreach ($extensionRequire as $app => $value) {
             // 只获取在可安装的应用列表中的依赖数据
             if (in_array($app, $this->getApp())) {
                 foreach ($value as $uniqueName => $row) {
                     // "engine-core/theme-bootstrap-v3": "*"
                     if (is_string($row)) {
+                        if (isset($composerRequire[$uniqueName])) {
+                            $row = $composerRequire[$uniqueName]; // 以composer依赖的版本为准
+                        }
                         $dependencies[$app][$uniqueName] = [
                             'app'     => $app,
                             'version' => $row,
                         ];
                     } else {
+                        if (isset($composerRequire[$uniqueName])) {
+                            $row['version'] = $composerRequire[$uniqueName]; // 以composer依赖的版本为准
+                        }
                         /*
                          * "engine-core/theme-bootstrap-v3": {
                          *  "app": "backend",
