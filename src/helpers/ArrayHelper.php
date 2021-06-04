@@ -7,7 +7,6 @@
 
 namespace EngineCore\helpers;
 
-use EngineCore\Ec;
 use yii\helpers\ArrayHelper as baseArrayHelper;
 use yii\helpers\ReplaceArrayValue;
 use yii\helpers\UnsetArrayValue;
