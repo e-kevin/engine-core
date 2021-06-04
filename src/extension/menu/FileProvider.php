@@ -11,7 +11,6 @@ namespace EngineCore\extension\menu;
 
 use EngineCore\Ec;
 use EngineCore\helpers\ArrayHelper;
-use Yii;
 use yii\base\BaseObject;
 
 /**
@@ -60,9 +59,9 @@ class FileProvider extends BaseObject implements MenuProviderInterface
      *
      * 把多维菜单数据格式化为一维数组，并为菜单数据虚构`$id`和`$parent_id`值，用于关联子级菜单数据
      *
-     * @param array $items      菜单数据
+     * @param array $items 菜单数据
      * @param int   $increaseId 递增菜单ID
-     * @param int   $parentId   菜单父级ID
+     * @param int   $parentId 菜单父级ID
      *
      * @return array
      */

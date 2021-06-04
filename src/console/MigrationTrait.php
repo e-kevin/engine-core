@@ -15,6 +15,8 @@ use yii\di\Instance;
  *
  * 必须先确保存在`$db`数据库连接组件属性
  *
+ * @property Connection $db
+ *
  * @author E-Kevin <e-kevin@qq.com>
  */
 trait MigrationTrait
@@ -25,14 +27,14 @@ trait MigrationTrait
      */
     protected function truncateDatabase()
     {
-        $db = Instance::ensure($this->db, Connection::class);;
-        $schemas = $db->schema->getTableSchemas();
+        $this->db = Instance::ensure($this->db, Connection::class);;
+        $schemas = $this->db->schema->getTableSchemas();
         
         // First drop all foreign keys,
         foreach ($schemas as $schema) {
             if ($schema->foreignKeys) {
                 foreach ($schema->foreignKeys as $name => $foreignKey) {
-                    $db->createCommand()->dropForeignKey($name, $schema->name)->execute();
+                    $this->db->createCommand()->dropForeignKey($name, $schema->name)->execute();
                     $this->stdout("Foreign key $name dropped.\n");
                 }
             }
@@ -41,11 +43,11 @@ trait MigrationTrait
         // Then drop the tables:
         foreach ($schemas as $schema) {
             try {
-                $db->createCommand()->dropTable($schema->name)->execute();
+                $this->db->createCommand()->dropTable($schema->name)->execute();
                 $this->stdout("Table {$schema->name} dropped.\n");
             } catch (\Exception $e) {
                 if ($this->isViewRelated($e->getMessage())) {
-                    $db->createCommand()->dropView($schema->name)->execute();
+                    $this->db->createCommand()->dropView($schema->name)->execute();
                     $this->stdout("View {$schema->name} dropped.\n");
                 } else {
                     $this->stdout("Cannot drop {$schema->name} Table .\n");
