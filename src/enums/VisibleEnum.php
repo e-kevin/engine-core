@@ -5,6 +5,8 @@
  * @license BSD 3-Clause License
  */
 
+declare(strict_types=1);
+
 namespace EngineCore\enums;
 
 use Yii;
@@ -27,8 +29,8 @@ class VisibleEnum extends Enums
     protected static function _list(): array
     {
         return [
-            self::INVISIBLE => Yii::t('Ec/app', 'Hidden'),
-            self::VISIBLE => Yii::t('Ec/app', 'Display'),
+            self::INVISIBLE => Yii::t('ec/app', 'Hidden'),
+            self::VISIBLE => Yii::t('ec/app', 'Display'),
         ];
     }
     

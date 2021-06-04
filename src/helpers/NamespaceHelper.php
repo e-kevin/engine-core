@@ -5,6 +5,8 @@
  * @license BSD 3-Clause License
  */
 
+declare(strict_types=1);
+
 namespace EngineCore\helpers;
 
 use Yii;
@@ -22,7 +24,7 @@ class NamespaceHelper
      * 命名空间转换为实际路径
      *
      * @param string $namespace
-     * @param bool $throwException
+     * @param bool   $throwException
      *
      * @return bool|string
      */
@@ -43,22 +45,22 @@ class NamespaceHelper
      *
      * @param string $namespace 命名空间
      *
-     * @return int|null|string 别名键名
+     * @return string 别名键名
      */
-    public static function getAliasesKeyByNamespace($namespace)
+    public static function getAliasesKeyByNamespace($namespace): string
     {
-        $has = null;
-        $namespace = '@' . str_replace('\\', '/', $namespace);
+        $has = '';
+        $alias = '@' . str_replace('\\', '/', $namespace);
         foreach (Yii::$aliases as $key => $value) {
             if (is_array($value)) {
                 foreach ($value as $k => $v) {
-                    if (($pos = strrpos($namespace, $k)) !== false) {
+                    if (($pos = strrpos($alias, $k)) !== false) {
                         $has = $k;
                         break;
                     }
                 }
             } else {
-                if (($pos = strrpos($namespace, $key)) !== false) {
+                if (($pos = strrpos($alias, $key)) !== false) {
                     $has = $key;
                     break;
                 }

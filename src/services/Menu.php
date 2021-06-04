@@ -5,16 +5,18 @@
  * @license BSD 3-Clause License
  */
 
+declare(strict_types=1);
+
 namespace EngineCore\services;
 
-use EngineCore\services\menu\components\ConfigServiceInterface;
 use EngineCore\services\menu\components\PageServiceInterface;
 use EngineCore\base\Service;
+use EngineCore\services\menu\Config;
 
 /**
  * 菜单管理服务类
  *
- * @property ConfigServiceInterface|Service $config
+ * @property Config|Service $config
  * @property PageServiceInterface|Service   $page
  *
  * @author E-Kevin <e-kevin@qq.com>
@@ -40,7 +42,7 @@ class Menu extends Service
     /**
      * 配置服务类
      *
-     * @return ConfigServiceInterface|Service
+     * @return Config|Service
      */
     public function getConfig()
     {

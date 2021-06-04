@@ -5,6 +5,8 @@
  * @license BSD 3-Clause License
  */
 
+declare(strict_types=1);
+
 namespace EngineCore\enums;
 
 use Yii;
@@ -28,9 +30,9 @@ class GenderEnum extends Enums
     protected static function _list(): array
     {
         return [
-            self::UNKNOWN => Yii::t('Ec/app', 'Secrecy'),
-            self::MALE => Yii::t('Ec/app', 'Male'),
-            self::FEMALE => Yii::t('Ec/app', 'Female'),
+            self::UNKNOWN => Yii::t('ec/app', 'Secrecy'),
+            self::MALE => Yii::t('ec/app', 'Male'),
+            self::FEMALE => Yii::t('ec/app', 'Female'),
         ];
     }
     

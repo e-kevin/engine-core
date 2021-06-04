@@ -1,8 +1,8 @@
 <?php
 /**
- * @link https://github.com/e-kevin/engine-core
+ * @link      https://github.com/e-kevin/engine-core
  * @copyright Copyright (c) 2020 E-Kevin
- * @license BSD 3-Clause License
+ * @license   BSD 3-Clause License
  */
 
 namespace EngineCore\services\menu;
@@ -28,20 +28,63 @@ class Page extends Service implements PageServiceInterface
      */
     public $service;
     
-    /**
-     * @var string 显示菜单标题的字段名
-     */
-    public $titleField = 'label';
+    private $_pkField = 'id';
     
     /**
-     * @var string 主键字段名
+     * {@inheritdoc}
      */
-    public $pkField = 'id';
+    public function getPkField(): string
+    {
+        return $this->_pkField;
+    }
     
     /**
-     * @var string 父级id字段名
+     * {@inheritdoc}
      */
-    public $parentIdField = 'parent_id';
+    public function setPkField($field)
+    {
+        $this->_pkField = $field;
+    }
+    
+    private $_parentIdField = 'parent_id';
+    
+    /**
+     * {@inheritdoc}
+     */
+    public function getParentIdField(): string
+    {
+        return $this->_parentIdField;
+    }
+    
+    /**
+     * {@inheritdoc}
+     */
+    public function setParentIdField($field)
+    {
+        $this->_parentIdField = $field;
+    }
+    
+    private $_titleField;
+    
+    /**
+     * {@inheritdoc}
+     */
+    public function getShowTitleField(): string
+    {
+        if (null === $this->_titleField) {
+            $this->setShowTitleField($this->service->getConfig()->getProvider()->getAliasField());
+        }
+        
+        return $this->_titleField;
+    }
+    
+    /**
+     * {@inheritdoc}
+     */
+    public function setShowTitleField($field)
+    {
+        $this->_titleField = $field;
+    }
     
     private $_url;
     
@@ -144,9 +187,9 @@ class Page extends Service implements PageServiceInterface
     /**
      * {@inheritdoc}
      */
-    public function setTheme($theme = null)
+    public function setTheme($theme)
     {
-        $this->_theme = $theme ?: Yii::$app->params['themeConfig']['name'];
+        $this->_theme = $theme;
         
         return $this;
     }
@@ -157,7 +200,7 @@ class Page extends Service implements PageServiceInterface
     public function getTheme()
     {
         if ($this->_theme === null) {
-            $this->setTheme();
+            $this->setTheme(Ec::$service->getExtension()->getThemeRepository()->getConfig('name'));
         }
         
         return $this->_theme;
@@ -171,13 +214,6 @@ class Page extends Service implements PageServiceInterface
     public function generateNavigation($category, array $condition = []): array
     {
         $menus = $this->_getMenusByCategory($category, $condition);
-        // 菜单数据不存在时，调用系统默认的菜单数据
-        if (empty($menus)) {
-            $this->service->getConfig()->setProvider([
-                'class' => 'wocenter\core\MenuProvider',
-            ]);
-            $menus = $this->_getMenusByCategory($category, $condition);
-        }
         foreach ($menus as &$row) {
             $row = ArrayHelper::listToTree($row);
         }
@@ -188,8 +224,8 @@ class Page extends Service implements PageServiceInterface
     /**
      * 根据查询条件获取指定[单个|多个]分类的菜单数据
      *
-     * @param string|array $category 分类ID
-     * @param array $condition 查询条件
+     * @param string|array $category  分类ID
+     * @param array        $condition 查询条件
      *
      * @return array ['backend' => [], 'frontend' => [], 'main' => []]
      */
@@ -199,14 +235,17 @@ class Page extends Service implements PageServiceInterface
             $this->service->getConfig()->getProvider()->getAll(),
             array_merge(
                 [
-                    'category_id' => [is_array($category) ? 'in' : 'eq', $category],
-                    'theme' => ['in', ['common', $this->getTheme()]], // 获取公共菜单和主题菜单
+                    'category' => [is_array($category) ? 'in' : 'eq', $category],
+                    'theme'    => ['in', [
+                        Ec::$service->getExtension()->getThemeRepository()->getDefaultConfig('name'), // 默认主题
+                        $this->getTheme() // 当前主题
+                    ]],
                 ],
                 $condition
             )
         );
         
-        return $menus ? ArrayHelper::index($menus, 'id', 'category_id') : [];
+        return $menus ? ArrayHelper::index($menus, 'id', 'category') : [];
     }
     
     /**
@@ -215,7 +254,7 @@ class Page extends Service implements PageServiceInterface
     public function getTitle($defaultTitle = ''): string
     {
         if ($menus = $this->getMenus()) {
-            return $menus[$this->titleField];
+            return $menus[$this->getShowTitleField()];
         } elseif ($defaultTitle) {
             if (is_callable($defaultTitle)) {
                 $defaultTitle = call_user_func($defaultTitle);
@@ -230,17 +269,17 @@ class Page extends Service implements PageServiceInterface
     /**
      * {@inheritdoc}
      */
-    public function getBreadcrumbs($levelCount = 10, $useUrl = false): array
+    public function getBreadcrumbs($useUrl = false, $levelCount = 10): array
     {
         $breadcrumbs = [];
         if (null === $this->_parentId) {
             if ($menus = $this->getMenus()) {
-                $breadcrumbs[$levelCount] = ['label' => $menus[$this->titleField]];
+                $breadcrumbs[$levelCount] = ['label' => $menus[$this->getShowTitleField()]];
                 if ($useUrl && strpos($menus['url'], '/') !== false) {
                     $breadcrumbs[$levelCount]['url'] = array_merge([$menus['url']], $menus['params']);
                 }
                 $levelCount--;
-                $this->setParentId($menus[$this->parentIdField]);
+                $this->setParentId($menus[$this->getParentIdField()]);
             } else {
                 $breadcrumbs[$levelCount] = ['label' => $this->_url . ' ~']; // 添加默认标题标记`~`
                 
@@ -248,10 +287,12 @@ class Page extends Service implements PageServiceInterface
             }
         }
         
-        $provider = $this->service->getConfig()->getProvider();
+        // 递归获取父级面包屑导航
+        $allMenus = $this->service->getConfig()->getProvider()->getAll();
         while ($levelCount > 0 && $this->_parentId !== null) {
-            if ($parentMenus = $provider->getAll()[$this->_parentId] ?? []) {
-                $breadcrumbs[$levelCount]['label'] = $parentMenus[$this->titleField];
+            if ($parentMenus = $allMenus[$this->_parentId] ?? []) {
+                $breadcrumbs[$levelCount]['label'] = $parentMenus[$this->getShowTitleField()];
+                // 如果父级菜单存在有效url或面包屑导航基础地址不为空，则为父级面包屑导航附加链接
                 if (strpos($parentMenus['url'], '/') !== false || null !== $this->_breadcrumbsBaseUrl) {
                     /**
                      * @see setBreadcrumbsUrlParams()
@@ -262,12 +303,12 @@ class Page extends Service implements PageServiceInterface
                         $breadcrumbsUrlParams = $this->_breadcrumbsUrlParams;
                     }
                     $breadcrumbs[$levelCount]['url'] = array_merge(
-                        [$this->_breadcrumbsBaseUrl ?: $parentMenus['url']],
+                        [$this->_breadcrumbsBaseUrl ?: $parentMenus['url']], // 优先使用面包屑导航基础地址
                         $parentMenus['params'],
                         $breadcrumbsUrlParams ?: []
                     );
                 }
-                $this->setParentId($parentMenus[$this->parentIdField]);
+                $this->setParentId($parentMenus[$this->getParentIdField()]);
             } else {
                 $this->setParentId(null);
             }
@@ -289,7 +330,8 @@ class Page extends Service implements PageServiceInterface
             if (is_callable($defaultTitle)) {
                 $defaultTitle = call_user_func($defaultTitle);
             }
-            $breadcrumbs['label'] = $defaultTitle ?: $menus[$this->titleField]; // 默认标题优先级最高
+            $breadcrumbs['label'] = $defaultTitle ?: $menus[$this->getShowTitleField()]; // 默认标题优先级最高
+            // 如果父级菜单存在有效url或面包屑导航基础地址不为空，则为父级面包屑导航附加链接
             if (strpos($menus['url'], '/') !== false || null !== $this->_breadcrumbsBaseUrl) {
                 /**
                  * @see setBreadcrumbsUrlParams()
@@ -300,7 +342,7 @@ class Page extends Service implements PageServiceInterface
                     $urlParams = $this->_breadcrumbsUrlParams;
                 }
                 $breadcrumbs['url'] = array_merge(
-                    [$this->_breadcrumbsBaseUrl ?: $menus['url']],
+                    [$this->_breadcrumbsBaseUrl ?: $menus['url']],  // 优先使用面包屑导航基础地址
                     $menus['params'],
                     $urlParams ?: []
                 );
@@ -316,28 +358,32 @@ class Page extends Service implements PageServiceInterface
     public function reset()
     {
         $this->_url = $this->_level = $this->_conditions = $this->_theme =
-        $this->_breadcrumbsUrlParams = $this->_breadcrumbsBaseUrl = $this->_parentId = null;
+        $this->_breadcrumbsUrlParams = $this->_breadcrumbsBaseUrl = $this->_parentId = $this->_menus = null;
         
         return $this;
     }
+    
+    private $_menus;
     
     /**
      * {@inheritdoc}
      */
     public function getMenus(): array
     {
-        $this->_initConditions();
-        $provider = $this->service->getConfig()->getProvider();
-        if (isset($this->_conditions[$this->pkField])) {
-            $menus = $provider->getAll()[$this->_conditions[$this->pkField]] ?? [];
-        } elseif (isset($this->_conditions[$this->parentIdField])) {
-            $menus = $provider->getAll()[$this->_conditions[$this->parentIdField]] ?? [];
-        } else {
-            // 优先获取主题菜单
-            if ($oldMenus = ArrayHelper::listSearch($provider->getAll($this->_level), $this->_conditions)) {
-                $menus = ArrayHelper::listSearch($oldMenus, ['theme' => $this->_theme]) ?: $oldMenus;
+        if (null === $this->_menus) {
+            $this->_initConditions();
+            $provider = $this->service->getConfig()->getProvider();
+            if (isset($this->_conditions[$this->getPkField()])) {
+                $this->_menus = $provider->getAll()[$this->_conditions[$this->getPkField()]] ?? [];
+            } elseif (isset($this->_conditions[$this->getParentIdField()])) {
+                $this->_menus = $provider->getAll()[$this->_conditions[$this->getParentIdField()]] ?? [];
             } else {
-                $menus = $oldMenus;
+                // 优先获取主题菜单
+                if ($oldMenus = ArrayHelper::listSearch($provider->getAllByLevel($this->_level), $this->_conditions)) {
+                    $this->_menus = ArrayHelper::listSearch($oldMenus, ['theme' => $this->getTheme()]) ?: $oldMenus;
+                } else {
+                    $this->_menus = $oldMenus;
+                }
             }
         }
         
@@ -345,14 +391,14 @@ class Page extends Service implements PageServiceInterface
         if ($this->_debug) {
             Ec::dump([
                 'conditions' => $this->_conditions,
-                'url' => $this->_url,
-                'level' => $this->_level,
-                'parent_id' => $this->_parentId,
-                'menus' => $menus,
+                'url'        => $this->_url,
+                'level'      => $this->_level,
+                'parent_id'  => $this->_parentId,
+                'menus'      => $this->_menus,
             ]);
         }
         
-        return $menus[0] ?? $menus;
+        return $this->_menus[0] ?? $this->_menus;
     }
     
     /**
@@ -366,21 +412,20 @@ class Page extends Service implements PageServiceInterface
         if (null === $this->_url) {
             $this->setUrl(null);
         }
-        // 设置默认主题
-        if (null === $this->_theme) {
-            $this->setTheme();
-        }
         // $conditions查询条件优先级最高
         if (null !== $this->_conditions) {
             // 如果查询条件包含主键，则优先级最高，并剔除其他查询条件
-            if (isset($this->_conditions[$this->pkField])) {
-                $this->_conditions = [$this->pkField => $this->_conditions[$this->pkField]];
+            if (isset($this->_conditions[$this->getPkField()])) {
+                $this->_conditions = [$this->getPkField() => $this->_conditions[$this->getPkField()]];
             } // 父类ID字段查询条件
-            elseif (isset($this->_conditions[$this->parentIdField]) || null !== $this->_parentId) {
-                $this->_conditions = [$this->parentIdField => $this->_conditions[$this->parentIdField] ?? $this->_parentId];
+            elseif (isset($this->_conditions[$this->getParentIdField()]) || null !== $this->_parentId) {
+                $this->_conditions = [$this->getParentIdField() => $this->_conditions[$this->getParentIdField()] ?? $this->_parentId];
             } // 其他查询条件
             else {
                 $this->_level = $this->_conditions['level'] ?? null;
+                if (null === $this->_level) {
+                    throw new InvalidConfigException('The "level" property must be set.');
+                }
                 if (!isset($this->_conditions['url'])) {
                     $this->_conditions['url'] = $this->_url;
                 } else {
@@ -392,15 +437,18 @@ class Page extends Service implements PageServiceInterface
         } // 默认使用`$url`和`$level`查询条件即可定位到所需的菜单数据
         else {
             $this->_conditions = [
-                'url' => $this->_url,
+                'url'   => $this->_url,
                 'level' => $this->_level,
             ];
             if (null !== $this->_parentId) {
-                $this->_conditions[$this->parentIdField] = $this->_parentId;
+                $this->_conditions[$this->getParentIdField()] = $this->_parentId;
             }
         }
         // 添加对多主题菜单的支持
-        $this->_conditions['theme'] = ['in', ['common', $this->_theme]];
+        $this->_conditions['theme'] = ['in', [
+            Ec::$service->getExtension()->getThemeRepository()->getDefaultConfig('name'),
+            $this->getTheme(),
+        ]];
     }
     
 }

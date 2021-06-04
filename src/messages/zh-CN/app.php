@@ -1,8 +1,8 @@
 <?php
 /**
- * @link https://github.com/e-kevin/engine-core
+ * @link      https://github.com/e-kevin/engine-core
  * @copyright Copyright (c) 2020 E-Kevin
- * @license BSD 3-Clause License
+ * @license   BSD 3-Clause License
  */
 
 //todo 精简，只保留ec需要的，其它在项目里实现
@@ -28,8 +28,7 @@ return [
     'Stop to jump.'                                                            => '停止跳转',
     'After a few seconds the page will automatically jump.'                    => '{seconds}秒钟后，页面会自动跳转',
     'Message prompt'                                                           => '消息提示',
-    'Found a bug? Tell about it to the extension developer.'
-                                                                               => '发现Bug？<a href="{issueUrl}" target="_blank">留言</a>扩展开发者，以便及时修正',
+    'Found a bug? Tell about it to the extension developer.'                   => '发现Bug？<a href="{issueUrl}" target="_blank">留言</a>扩展开发者，以便及时修正',
     'Delete confirm.'                                                          => '确定要删除所选数据吗?',
     'Delete successful.'                                                       => '删除数据成功！',
     'Delete failure.'                                                          => '删除数据出错！',
@@ -99,14 +98,6 @@ return [
     // 扩展
     'Create type by user'                                                      => '用户',
     'Create type by extension'                                                 => '扩展',
-    // 菜单
-    'Extension Center'                                                         => '扩展中心',
-    'Extension Manage'                                                         => '扩展管理',
-    'Module Manage'                                                            => '模块管理',
-    'Controller Manage'                                                        => '控制器管理',
-    'Theme Manage'                                                             => '主题管理',
-    'Extended function'                                                        => '扩展功能',
-    'List'                                                                     => '列表',
     // 日期时间
     'Today {time}'                                                             => '今天 {time}',
     'Yesterday {time}'                                                         => '昨天 {time}',

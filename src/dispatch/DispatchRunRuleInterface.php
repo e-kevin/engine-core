@@ -8,7 +8,7 @@
 namespace EngineCore\dispatch;
 
 /**
- * 调度器运行模式规则接口类
+ * 调度器运行模式规则接口
  *
  * @author E-Kevin <e-kevin@qq.com>
  */

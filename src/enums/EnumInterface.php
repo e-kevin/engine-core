@@ -5,10 +5,12 @@
  * @license BSD 3-Clause License
  */
 
+declare(strict_types=1);
+
 namespace EngineCore\enums;
 
 /**
- * 枚举接口类
+ * 枚举接口
  *
  * @author E-Kevin <e-kevin@qq.com>
  */

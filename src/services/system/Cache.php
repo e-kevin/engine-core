@@ -32,14 +32,6 @@ class Cache extends Service
     public $cacheComponentId = 'commonCache';
     
     /**
-     * @var mixed 缓存组件
-     */
-    public $cacheComponent = [
-        'class'     => 'yii\caching\FileCache',
-        'cachePath' => '@common/runtime/cache',
-    ];
-    
-    /**
      * @var \yii\caching\Cache
      */
     private $_cache;
@@ -52,8 +44,12 @@ class Cache extends Service
     public function getComponent()
     {
         if (null === $this->_cache) {
+            // 系统没有配置缓存组件则使用默认配置
             if (!Yii::$app->has($this->cacheComponentId)) {
-                $this->setComponent($this->cacheComponent);
+                $this->setComponent([
+                    'class'     => 'yii\caching\FileCache',
+                    'cachePath' => '@common/runtime/cache',
+                ]);
             }
             
             $this->_cache = Yii::$app->get($this->cacheComponentId);

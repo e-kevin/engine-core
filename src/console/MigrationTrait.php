@@ -8,11 +8,12 @@
 namespace EngineCore\console;
 
 use yii\db\Connection;
+use yii\di\Instance;
 
 /**
  * Class Migration trait
  *
- * @property Connection|array|string $db
+ * 必须先确保存在`$db`数据库连接组件属性
  *
  * @author E-Kevin <e-kevin@qq.com>
  */
@@ -24,7 +25,7 @@ trait MigrationTrait
      */
     protected function truncateDatabase()
     {
-        $db = $this->db;
+        $db = Instance::ensure($this->db, Connection::class);;
         $schemas = $db->schema->getTableSchemas();
         
         // First drop all foreign keys,
@@ -55,7 +56,9 @@ trait MigrationTrait
     
     /**
      * Determines whether the error message is related to deleting a view or not
+     *
      * @param string $errorMessage
+     *
      * @return bool
      *
      * @see \yii\console\controllers\MigrateController::isViewRelated()

@@ -8,7 +8,7 @@
 namespace EngineCore\dispatch;
 
 /**
- * 调度响应器接口类，用于更改反馈给客户端的表现形式
+ * 调度响应器接口，用于更改反馈给客户端的表现形式
  *
  * @author E-Kevin <e-kevin@qq.com>
  */

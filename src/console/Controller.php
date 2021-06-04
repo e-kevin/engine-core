@@ -8,6 +8,7 @@
 namespace EngineCore\console;
 
 use EngineCore\Ec;
+use yii\helpers\Console;
 
 /**
  * console的基础Controller类
@@ -48,6 +49,61 @@ ICON
         }
         
         return true;
+    }
+    
+    /**
+     * 多项选择列表
+     *
+     * @param string $prompt
+     * @param array  $options
+     *
+     * @return mixed
+     */
+    public function multiSelect(string $prompt, $options = [])
+    {
+        $out = [];
+        $oldOptions = $options;
+        $operation = [
+            '!' => 'Show selected',
+            '*' => 'Reselect',
+            '%' => 'Selection complete',
+            '/' => 'Exit',
+            '?' => 'Show help',
+        ];
+        top:
+        $this->stdout("$prompt: [" . implode(',', array_keys($operation)) . ']' . PHP_EOL, Console::FG_YELLOW);
+        foreach ($options as $key => $value) {
+            Console::output(" $key - $value");
+        }
+        $input = Console::stdin();
+        if ($input === '?') {
+            foreach ($operation as $key => $value) {
+                Console::output(" $key - $value");
+            }
+            goto top;
+        } elseif ($input === '/') {
+            return $input;
+        } elseif ($input === '*') {
+            $out = [];
+            $options = $oldOptions;
+            goto top;
+        } elseif ($input === '!') {
+            $this->stdout('You chose: ' . implode(',', $out) . PHP_EOL, Console::FG_RED);
+            goto top;
+        } elseif ($input === '%') {
+            $this->stdout('You chose: ' . implode(',', $out) . PHP_EOL, Console::FG_RED);
+        } elseif (!array_key_exists($input, $options)) {
+            goto top;
+        } else {
+            $out[$input] = $options[$input];
+            unset($options[$input]);
+            foreach ($out as $key => $value) {
+                $this->stdout("$value selected." . PHP_EOL, Console::FG_GREEN);
+            }
+            goto top;
+        }
+        
+        return $input;
     }
     
 }

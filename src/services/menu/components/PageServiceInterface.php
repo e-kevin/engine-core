@@ -8,19 +8,60 @@
 namespace EngineCore\services\menu\components;
 
 /**
- * 视图页面服务接口类
+ * 视图页面服务接口
  *
- * @property string $titleField 显示菜单标题的字段名
+ * @property string $showTitleField 显示菜单标题的字段名
  * @property string $pkField 主键字段名
  * @property string $parentIdField 父级id字段名
- * @property string $title
- * @property array $breadcrumbs
- * @property string $theme
+ * @property string $title 页面标题
+ * @property string $theme 主题名
  *
  * @author E-Kevin <e-kevin@qq.com>
  */
 interface PageServiceInterface
 {
+    
+    /**
+     * 获取主键字段名
+     *
+     * @return string
+     */
+    public function getPkField(): string;
+    
+    /**
+     * 设置主键字段名
+     *
+     * @param string $field
+     */
+    public function setPkField($field);
+    
+    /**
+     * 获取父级id字段名
+     *
+     * @return string
+     */
+    public function getParentIdField(): string;
+    
+    /**
+     * 设置父级id字段名
+     *
+     * @param string $field
+     */
+    public function setParentIdField($field);
+    
+    /**
+     * 获取显示菜单标题的字段名
+     *
+     * @return string
+     */
+    public function getShowTitleField(): string;
+    
+    /**
+     * 设置显示菜单标题的字段名
+     *
+     * @param string $field
+     */
+    public function setShowTitleField($field);
     
     /**
      * 设置用来索引符合$url要求的菜单数据
@@ -88,11 +129,11 @@ interface PageServiceInterface
     /**
      * 设置主题名
      *
-     * @param string|null $theme
+     * @param string $theme
      *
      * @return $this
      */
-    public function setTheme($theme = null);
+    public function setTheme($theme);
     
     /**
      * 获取主题名
@@ -102,7 +143,7 @@ interface PageServiceInterface
     public function getTheme();
     
     /**
-     * 用指定$condition条件生成指定分类的菜单数据
+     * 根据`$condition`条件生成指定分类的导航菜单数据
      *
      * @param string|array $category 分类ID
      * @param array $condition 查询条件
@@ -121,28 +162,27 @@ interface PageServiceInterface
     public function getTitle($defaultTitle = ''): string;
     
     /**
-     * 获取面包屑导航
+     * 根据查询条件获取面包屑导航
      *
-     * @param int $levelCount 层级总数，表示最多获取多少层父级菜单数据
      * @param bool $useUrl 最后一个面包屑是否添加url链接
-     * todo 添加对匿名函数的支持，可以实现类似默认值和自定义url以及参数等功能
+     * @param int $levelCount 层级总数，表示最多获取多少层父级菜单数据
      *
      * @return array
      * @see \yii\widgets\Breadcrumbs
      */
-    public function getBreadcrumbs($levelCount = 10, $useUrl = false): array;
+    public function getBreadcrumbs($useUrl = false, $levelCount = 10): array;
     
     /**
      * 生成面包屑
      *
-     * @param string $defaultTitle 默认标题
+     * @param string|callable $defaultTitle 默认标题
      *
      * @return array
      */
     public function generateBreadcrumbs($defaultTitle = ''): array;
     
     /**
-     * 根据查询条件获取指定菜单数据
+     * 根据查询条件获取菜单数据
      *
      * @return array
      */

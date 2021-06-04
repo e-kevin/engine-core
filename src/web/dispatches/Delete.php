@@ -99,12 +99,12 @@ class Delete extends Dispatch
     {
         if ($res) {
             return $this->response->success(
-                $this->successMessage ?: Yii::t('Ec/app', 'Delete successful.'),
+                $this->successMessage ?: Yii::t('ec/app', 'Delete successful.'),
                 $this->successJumpUrl ? array_merge([$this->successJumpUrl], $this->urlParams) : Yii::$app->getRequest()->getReferrer()
             );
         } else {
             return $this->response->error(
-                $this->errorMessage ?: Yii::t('Ec/app', 'Delete failure.'),
+                $this->errorMessage ?: Yii::t('ec/app', 'Delete failure.'),
                 $this->errorJumpUrl ? array_merge([$this->errorJumpUrl], $this->urlParams) : Yii::$app->getRequest()->getReferrer()
             );
         }

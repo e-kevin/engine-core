@@ -1,8 +1,8 @@
 <?php
 /**
- * @link https://github.com/e-kevin/engine-core
+ * @link      https://github.com/e-kevin/engine-core
  * @copyright Copyright (c) 2020 E-Kevin
- * @license BSD 3-Clause License
+ * @license   BSD 3-Clause License
  */
 
 namespace EngineCore\helpers;
@@ -46,14 +46,14 @@ class UrlHelper
     /**
      * 将 参数数组 变回 字符串形式的参数格式
      *
-     * @param array $array_query
+     * @param array $arrayQuery
      *
      * @return string
      */
-    public static function getUrlQuery(array $array_query)
+    public static function getUrlQuery(array $arrayQuery): string
     {
         $tmp = [];
-        foreach ($array_query as $name => $value) {
+        foreach ($arrayQuery as $name => $value) {
             if (is_array($value)) {
                 foreach ($value as $k => $v) {
                     $tmp[] = "{$name}[{$k}]={$v}";
@@ -69,8 +69,8 @@ class UrlHelper
     /**
      * 删除url地址里指定的参数
      *
-     * @param string $url
-     * @param string $params 待删除参数名，不支持删除数组参数
+     * @param string  $url
+     * @param string  $params 待删除参数名，不支持删除数组参数
      * @param boolean $format 是否返回格式化后干净的url地址，默认格式化
      *
      * @return string|array 干净的url或包含path、query等信息的数组

@@ -1,39 +1,31 @@
 <?php
 /**
- * @link https://github.com/e-kevin/engine-core
+ * @link      https://github.com/e-kevin/engine-core
  * @copyright Copyright (c) 2020 E-Kevin
- * @license BSD 3-Clause License
+ * @license   BSD 3-Clause License
  */
 
 namespace EngineCore\dispatch;
 
 use EngineCore\base\Modularity;
 use EngineCore\Ec;
-use EngineCore\extension\RunningExtensionInterface;
+use EngineCore\extension\entity\ExtensionEntityInterface;
 use Yii;
 use yii\base\InvalidConfigException;
 
 /**
  * 让Controller控制器类支持系统（Dispatch）调度功能
  *
- * @property \EngineCore\dispatch\AbstractDispatchManager    $dispatchManager    调度器管理器
- * @property array                                           $defaultDispatchMap 默认调度器配置
- * @property \EngineCore\extension\RunningExtensionInterface $extension          当前控制器所属的扩展信息
+ * @property Modularity                                   $module
+ * @property Dispatch                                     $action
+ * @property \EngineCore\dispatch\AbstractDispatchManager $dispatchManager    调度器管理器
+ * @property array                                        $defaultDispatchMap 默认调度器配置
+ * @property ExtensionEntityInterface                     $extension          当前控制器所属的扩展信息
  *
  * @author E-Kevin <e-kevin@qq.com>
  */
 trait DispatchTrait
 {
-    
-    /**
-     * @var Modularity
-     */
-    public $module;
-    
-    /**
-     * @var Dispatch
-     */
-    public $action;
     
     /**
      * @var int 运行模式
@@ -43,9 +35,15 @@ trait DispatchTrait
     
     /**
      * @var bool 开启主题功能
-     * @see \EngineCore\dispatch\ThemeRule::isEnableTheme() 查看优先级
+     * @see \EngineCore\dispatch\Theme::isEnableTheme() 查看优先级
      */
     public $enableTheme;
+    
+    /**
+     * @var bool 开启主题严谨模式
+     * @see \EngineCore\dispatch\Theme::isStrict() 查看优先级
+     */
+    public $strict;
     
     /**
      * @var array 调度器配置，该配置会覆盖默认调度器配置[[$defaultDispatchMap]]，二次开发时可配置该值更改默认调度器配置
@@ -63,19 +61,6 @@ trait DispatchTrait
      * @see \EngineCore\dispatch\SimpleParser::normalizeStringConfig() 配置格式参考
      */
     protected $defaultDispatchMap = [];
-    
-    /**
-     * {@inheritdoc}
-     */
-    public function init()
-    {
-        parent::init();
-        if ($this->getDispatchManager()->getThemeRule()->isEnableTheme()) {
-            // 设置主题视图目录
-            $this->module->setViewPath($this->module->getBasePath() . DIRECTORY_SEPARATOR . 'themes' .
-                DIRECTORY_SEPARATOR . Ec::getThemeConfig('name'));
-        }
-    }
     
     /**
      * 获取默认调度器配置
@@ -134,19 +119,19 @@ trait DispatchTrait
     }
     
     /**
-     * @var RunningExtensionInterface 当前控制器所属的扩展信息
+     * @var ExtensionEntityInterface 当前控制器所属的扩展信息
      */
     private $_runningExtension;
     
     /**
      * 获取当前控制器所属的扩展信息
      *
-     * @return RunningExtensionInterface
+     * @return ExtensionEntityInterface
      */
     public function getExtension()
     {
         if (null === $this->_runningExtension) {
-            $this->_runningExtension = Ec::getRunningExtension($this);
+            $this->_runningExtension = Ec::$service->getExtension()->entity($this);
         }
         
         return $this->_runningExtension;

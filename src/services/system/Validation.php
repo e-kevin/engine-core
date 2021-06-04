@@ -8,6 +8,7 @@
 namespace EngineCore\services\system;
 
 use EngineCore\base\Service;
+use EngineCore\extension\setting\SettingProviderInterface;
 use EngineCore\helpers\ArrayHelper;
 use EngineCore\services\System;
 use Yii;
@@ -27,25 +28,6 @@ class Validation extends Service
     public $service;
     
     /**
-     * 验证邮件地址后缀的正确性
-     *
-     * @param string $email 邮箱
-     *
-     * @return boolean true - 后缀通过 false - 后缀不通过
-     */
-    public function validateEmailSuffix($email)
-    {
-        $matches = [];
-        preg_match('/\b@\w+([-.]\w+)*\.\w+([-.]\w+)*$/', $email, $matches);
-        $email_suffix = $this->service->getConfig()->get('EMAIL_SUFFIX');   // 格式：@qq.com,@163.com
-        if ($email_suffix && in_array($matches['0'], explode(',', $email_suffix))) {
-            return false;
-        }
-        
-        return true;
-    }
-    
-    /**
      * 检测邮箱是否被禁止使用
      *
      * @param string $email 邮箱
@@ -55,18 +37,6 @@ class Validation extends Service
     public function validateEmail($email)
     {
         return true;
-    }
-    
-    /**
-     * 检测用户名是否包含系统保留字段
-     *
-     * @param string $username 用户名
-     *
-     * @return boolean true - 包含，false - 不包含
-     */
-    public function validateSystemUsername($username)
-    {
-        return ArrayHelper::inArrayCase($username, $this->service->getConfig()->get('FILTER_NICKNAME')) ? false : true;
     }
     
     /**

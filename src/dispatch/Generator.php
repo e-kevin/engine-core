@@ -1,20 +1,20 @@
 <?php
 /**
- * @link https://github.com/e-kevin/engine-core
+ * @link      https://github.com/e-kevin/engine-core
  * @copyright Copyright (c) 2020 E-Kevin
- * @license BSD 3-Clause License
+ * @license   BSD 3-Clause License
  */
 
 namespace EngineCore\dispatch;
 
 use EngineCore\base\Modularity;
 use EngineCore\Ec;
+use EngineCore\enums\EnableEnum;
 use EngineCore\helpers\ArrayHelper;
 use EngineCore\helpers\NamespaceHelper;
 use Yii;
 use yii\base\BaseObject;
 use yii\base\InvalidConfigException;
-use yii\base\NotSupportedException;
 use yii\web\Application;
 
 /**
@@ -91,27 +91,17 @@ class Generator extends BaseObject implements DispatchGeneratorInterface
      */
     protected function initConfig($id, array $config): array
     {
-        // 调度器支持视图渲染功能
-        if ($this->isSupportRender()) {
-            // 调度器需要渲染的视图文件，默认使用当前调度器ID的视图文件名
-            $config['response']['viewFile'] = $config['response']['viewFile'] ?? $id;
-            if ($this->dm->getThemeRule()->isEnableTheme()) {
-                // 调度器默认在该主题目录下寻找需要渲染的视图文件
-                $config['response']['themeName'] = $config['response']['themeName'] ?? Ec::getThemeConfig('name');
-            }
-        }
+        // 初始化调度响应器
+        $this->_initDispatchResponse($id, $config);
         // 开启调试模式
-        $debug = ArrayHelper::remove($config, 'debug', null);
+        $debug = ArrayHelper::remove($config, 'debug', false);
         // 调度器类名未指定，则根据调度器配置猜测调度器类名
         if (!isset($config['class'])) {
             $config['class'] = $this->_guessDispatchClass($id, $config);
         } else {
             // `class`被明确指定时，`map`映射配置将不生效
-            unset($config['class']['map']);
+            unset($config['map']);
         }
-        
-        // 初始化默认调度响应器
-        $this->_initDispatchResponse($config);
         
         // 设置调度器视图文件
         $this->_setViewFile($config);
@@ -131,20 +121,16 @@ class Generator extends BaseObject implements DispatchGeneratorInterface
      * 根据调度器配置猜测调度器类名
      *
      * @param string $id
-     * @param array  $config
+     * @param array  &$config
      *
      * @return string
      */
     private function _guessDispatchClass($id, &$config)
     {
-        if ($this->isSupportRender() && $this->dm->getThemeRule()->isEnableTheme()) {
-            // 转换为适用于命名空间的主题名格式
-            $themeName = NamespaceHelper::normalizeStringForNamespace($config['response']['themeName']);
-        } else {
-            $themeName = '';
-        }
         // 替换为映射后的调度路由
         $route = $this->dm->getController()->id . '/' . ArrayHelper::remove($config, 'map', $id);
+        // 转换为适用于命名空间的主题名格式
+        $themeName = NamespaceHelper::normalizeStringForNamespace($config['response']['themeName']);
         // 调度器路由类名
         $classString = NamespaceHelper::normalizeStringForNamespace($route);
         // 调度器命名空间
@@ -153,11 +139,11 @@ class Generator extends BaseObject implements DispatchGeneratorInterface
             $this->dm->getController()->getExtension()->getNamespace() . '\\dispatches';
         $dispatchNs .= '\\';
         // 开发者运行模式下，只有当前控制器属于系统扩展控制器才生效
-        if ($this->getRunRule()->isDeveloperMode()) {
+        if ($this->dm->getRunRule()->isDeveloperMode()) {
             // 开发者调度器命名空间
             $devDispatchNs = 'developer\\' . $dispatchNs;
-            // 开启主题功能，调度管理器将会在指定的主题目录内调用调度器
-            if ($this->dm->getThemeRule()->isEnableTheme()) {
+            // 开启主题功能，优先从主题目录内获取调度器
+            if ($this->dm->getTheme()->isEnableTheme()) {
                 // 如果指定主题的开发者调度器不存在，则获取开发者目录下的默认主题的调度器
                 if (!class_exists($config['class'] = $devDispatchNs . $themeName . '\\' . $classString)) { // 开发者调度器
                     // 开发者默认主题调度器不存在，则获取系统扩展内该指定主题的调度器
@@ -171,7 +157,7 @@ class Generator extends BaseObject implements DispatchGeneratorInterface
                         if (!class_exists($config['class'] = $dispatchNs . $themeName . '\\' . $classString)) {
                             if (!class_exists($config['class'] = $this->_getDefaultDispatch($dispatchNs, $classString, $themeName))) {
                                 // 还原为原来的调度器，有助于系统准确提醒具体哪个调度器需要创建
-                                $config['class'] = $dispatchNs . $themeName . '\\' . $classString;
+                                $config['class'] = $devDispatchNs . $themeName . '\\' . $classString;
                             }
                         }
                     }
@@ -179,29 +165,30 @@ class Generator extends BaseObject implements DispatchGeneratorInterface
             } // 关闭主题功能
             else {
                 // 如果开发者调度器不存在，则获取系统扩展调度器
-                if (!class_exists($config['class'] = $devDispatchNs . $classString)) { // 开发者调度器
-                    if (class_exists($config['class'] = $dispatchNs . $classString)) { // 系统扩展调度器
+                if (!class_exists($config['class'] = $devDispatchNs . $themeName . '\\' . $classString)) { // 开发者调度器
+                    if (class_exists($config['class'] = $dispatchNs . $themeName . '\\' . $classString)) { // 系统扩展调度器
                         Yii::info(
-                            $devDispatchNs . $classString .
+                            $devDispatchNs . $themeName . '\\' . $classString .
                             ': Developer extension dispatch does not exist and automatically calls system extension dispatch.',
                             __METHOD__
                         );
                     } else {
                         // 还原为原来的调度器，有助于系统准确提醒具体哪个调度器需要创建
-                        $config['class'] = $devDispatchNs . $classString;
+                        $config['class'] = $devDispatchNs . $themeName . '\\' . $classString;
                     }
                 }
             }
         } else {
-            // 开启主题功能，调度管理器将会在指定的主题目录内调用调度器
-            if ($this->dm->getThemeRule()->isEnableTheme()) {
+            // 开启主题功能，优先从主题目录内获取调度器
+            if ($this->dm->getTheme()->isEnableTheme()) {
+                $config['class'] = $dispatchNs . $themeName . '\\' . $classString;
                 // 系统扩展内指定主题的调度器不存在，则获取系统扩展内的默认主题调度器
-                if (!class_exists($config['class'] = $dispatchNs . $themeName . '\\' . $classString)) {
+                if (!class_exists($config['class'])) {
                     $config['class'] = $this->_getDefaultDispatch($dispatchNs, $classString, $themeName);
                 }
             } // 关闭主题功能
             else {
-                $config['class'] = $dispatchNs . $classString;
+                $config['class'] = $dispatchNs . $themeName . '\\' . $classString;
             }
         }
         
@@ -209,35 +196,46 @@ class Generator extends BaseObject implements DispatchGeneratorInterface
     }
     
     /**
-     * 初始化默认调度响应器
+     * 初始化调度响应器
      *
-     * @param array &$config
+     * @param string $id
+     * @param array  &$config
      */
-    private function _initDispatchResponse(&$config)
+    private function _initDispatchResponse($id, &$config)
     {
-        if (!isset($config['response']['class'])) {
-            if ($this->isSupportRender()) {
-                $config['response']['class'] = Ec::getThemeConfig('response');
-            }
+        // 调度器支持视图渲染功能
+        if ($this->dm->isSupportRender()) {
+            $responseConfig = Ec::$service->getExtension()->getThemeRepository()->getConfig();
+            $defaultConfig = Ec::$service->getExtension()->getThemeRepository()->getDefaultConfig();
+            // 调度响应器
+            $config['response']['class'] = $config['response']['class'] ?? (
+                $this->dm->getTheme()->isEnableTheme() ? $responseConfig['response'] : $defaultConfig['response']
+                );
+            // 调度器需要渲染的视图文件，默认使用当前调度器ID的视图文件名
+            $config['response']['viewFile'] = $config['response']['viewFile'] ?? $id;
+            // 调度器默认在该主题目录下寻找需要渲染的视图文件
+            $config['response']['themeName'] = $config['response']['themeName'] ?? (
+                $this->dm->getTheme()->isEnableTheme() ? $responseConfig['name'] : $defaultConfig['name']
+                );
         }
     }
     
     /**
-     * 设置调度器视图文件
+     * 设置调度响应器视图文件
      *
      * @param array &$config
      */
     private function _setViewFile(&$config)
     {
-        if ($this->isSupportRender()) {
-            // 视图文件是否存在视图同步标记'#'
+        if ($this->dm->isSupportRender()) {
+            // 视图文件存在视图同步标记'#'
             if (strrpos($config['response']['viewFile'], '#') === 0) {
-                // 存在视图同步标记'#'，则跟随调度器当前位置自动同步需要渲染的视图目录
+                // 存在视图同步标记'#'，则跟随调度器当前位置自动同步需要渲染的视图文件
                 $config['response']['viewFile'] = substr($config['response']['viewFile'], 1);
                 if (($pos = strrpos($config['class'], '\\dispatches')) !== false) {
                     // 将视图文件替换为别名路径
                     $viewFile = '@' . substr(str_replace('\\', '/', $config['class']), 0, $pos);
-                    $viewFile .= ($this->dm->getThemeRule()->isEnableTheme()
+                    $viewFile .= ($this->dm->getTheme()->isStrict()
                             ? '/themes/' . $config['response']['themeName']
                             : '/views')
                         . '/' . $this->dm->getController()->id . '/' . $config['response']['viewFile'];
@@ -257,8 +255,12 @@ class Generator extends BaseObject implements DispatchGeneratorInterface
     {
         if (YII_ENV_DEV) {
             if (Yii::$app instanceof Application) {
-                echo get_called_class() . ":</br></br>以下是 `" . $this->dm->getController()->getUniqueId()
+                echo get_called_class() . ":</br></br>" .
+                    
+                    "以下是路由 `" . $this->dm->getController()->getUniqueId()
                     . '/' . $id . "` 的调试信息：</br></br>";
+                echo '多主题功能：' . EnableEnum::value($this->dm->getTheme()->isEnableTheme()) . "</br>";
+                echo '主题严谨模式：' . EnableEnum::value($this->dm->getTheme()->isStrict()) . "</br></br>";
                 echo '当前调度器（' . NamespaceHelper::normalizeStringForNamespace($id) . '）的配置信息：';
                 Ec::dump($config);
                 echo '控制器调度配置信息：';
@@ -285,21 +287,21 @@ class Generator extends BaseObject implements DispatchGeneratorInterface
      * @param string $classString
      * @param string $themeName
      *
-     * @return string
+     * @return string 如果默认调度器不存在，则返回原来的调度器
      */
     private function _getDefaultDispatch($dispatchNs, $classString, $themeName)
     {
         $oldClass = $dispatchNs . $themeName . '\\' . $classString;
         // 调度器不是默认调度器则获取默认调度器
-        if ($themeName !== $this->dm->defaultThemeName) {
-            if (class_exists($class = $dispatchNs . $this->dm->defaultThemeName . '\\' . $classString)) {
-                Yii::info(
-                    $oldClass . ': Dispatch does not exist and automatically calls default dispatch.',
-                    __METHOD__
-                );
-                
-                return $class;
-            }
+        if ($themeName !== $this->dm->getTheme()->getDefault() &&
+            class_exists($class = $dispatchNs . $this->dm->getTheme()->getDefault() . '\\' . $classString)
+        ) {
+            Yii::info(
+                $oldClass . ': Dispatch does not exist and automatically calls default dispatch.',
+                __METHOD__
+            );
+            
+            return $class;
         }
         
         return $oldClass;
@@ -315,92 +317,8 @@ class Generator extends BaseObject implements DispatchGeneratorInterface
     private function _generateDispatchFile($className)
     {
         if (YII_DEBUG) {
-            throw new InvalidConfigException("请在该路径下创建调度器文件:\r\n"
-                . NamespaceHelper::namespace2Path($className) . '.php');
+            throw new InvalidConfigException("请在该路径下创建调度器文件:\r\n" . NamespaceHelper::namespace2Path($className) . '.php');
         }
-    }
-    
-    /**
-     * @var SimpleParser 调度器配置解析器
-     */
-    private $_parser;
-    
-    /**
-     * 获取调度器配置解析器
-     *
-     * @return DispatchConfigParserInterface
-     */
-    public function getParser()
-    {
-        if (null === $this->_parser) {
-            $this->setParser(SimpleParser::class);
-        }
-        
-        return $this->_parser;
-    }
-    
-    /**
-     * 设置调度器配置解析器
-     *
-     * @param string|array|callable $parser
-     *
-     * @throws InvalidConfigException
-     */
-    public function setParser($parser)
-    {
-        $this->_parser = Ec::createObject($parser, [$this->dm], DispatchConfigParserInterface::class);
-    }
-    
-    /**
-     * @var RunRule 调度器运行模式规则
-     */
-    private $_runRule;
-    
-    /**
-     * 获取调度器运行模式规则
-     *
-     * @return DispatchRunRuleInterface
-     */
-    public function getRunRule()
-    {
-        if (null === $this->_runRule) {
-            $this->setRunRule(RunRule::class);
-        }
-        
-        return $this->_runRule;
-    }
-    
-    /**
-     * 设置调度器运行模式规则
-     *
-     * @param string|array|callable $runRule
-     *
-     * @throws InvalidConfigException
-     */
-    public function setRunRule($runRule)
-    {
-        $this->_runRule = Ec::createObject($runRule, [$this->dm], DispatchRunRuleInterface::class);
-    }
-    
-    /**
-     * 调度器是否支持视图渲染功能
-     *
-     * @param bool $throwException 是否抛出异常
-     *
-     * @return bool
-     * @throws NotSupportedException
-     */
-    public function isSupportRender($throwException = false): bool
-    {
-        if (!Yii::$app instanceof Application) {
-            if ($throwException) {
-                throw new NotSupportedException('The current application does not support the dispatch response render function.');
-            } else {
-                return false;
-            }
-        }
-        
-        return true;
     }
     
 }

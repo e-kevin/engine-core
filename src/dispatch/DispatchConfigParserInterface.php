@@ -8,7 +8,7 @@
 namespace EngineCore\dispatch;
 
 /**
- * 调度器配置解析器接口类
+ * 调度器配置解析器接口
  *
  * 主要把各种格式的配置数据转换为调度管理器（DispatchManager）能够理解的数据
  *

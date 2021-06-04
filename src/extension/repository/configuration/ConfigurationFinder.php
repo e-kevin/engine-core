@@ -1,9 +1,11 @@
 <?php
 /**
- * @link https://github.com/e-kevin/engine-core
+ * @link      https://github.com/e-kevin/engine-core
  * @copyright Copyright (c) 2020 E-Kevin
- * @license BSD 3-Clause License
+ * @license   BSD 3-Clause License
  */
+
+declare(strict_types=1);
 
 namespace EngineCore\extension\repository\configuration;
 
@@ -168,7 +170,7 @@ abstract class ConfigurationFinder extends BaseObject implements ConfigurationFi
             $data['name'],
             $data['type'] ?? null,
             $data['description'] ?? null,
-            $data['version'] ?? $this->getVersion($data['name']),
+            $this->getVersion($data),
             $data['keywords'] ?? null,
             $data['homepage'] ?? null,
             $this->createAuthors($data['authors'] ?? null),
@@ -186,17 +188,19 @@ abstract class ConfigurationFinder extends BaseObject implements ConfigurationFi
     /**
      * 获取版本号
      *
-     * @param string $name
+     * @param array $config
      *
      * @return string
      */
-    protected function getVersion($name)
+    protected function getVersion($config)
     {
         /*
          * EngineCore默认使用'engine-core/installer-plugin' composer插件安装ec扩展，
          * 故扩展具体版本可从已安装的composer列表中获取。
          */
-        return Ec::$service->getSystem()->getVersion()->getComposerVersion($name) ?: 'dev-main';
+        return Ec::$service->getSystem()->getVersion()->getComposerVersion($config['name']) ?: (
+            $config['extra']['branch-alias']['dev-main'] ?? 'dev-main'
+        );
     }
     
     /**

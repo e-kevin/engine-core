@@ -1,9 +1,11 @@
 <?php
 /**
- * @link https://github.com/e-kevin/engine-core
+ * @link      https://github.com/e-kevin/engine-core
  * @copyright Copyright (c) 2020 E-Kevin
- * @license BSD 3-Clause License
+ * @license   BSD 3-Clause License
  */
+
+declare(strict_types=1);
 
 namespace EngineCore\services\system;
 
@@ -38,7 +40,7 @@ class Error extends Service
      *
      * @return bool
      */
-    public function hasModelErrors($attribute = null)
+    public function hasModelErrors($attribute = null): bool
     {
         return $attribute === null ? !empty($this->_errors) : isset($this->_errors[$attribute]);
     }
@@ -65,13 +67,13 @@ class Error extends Service
      * @see getModelFirstErrors()
      * @see getModelFirstError()
      */
-    public function getModelErrors($attribute = null)
+    public function getModelErrors($attribute = null): array
     {
         if ($attribute === null) {
-            return $this->_errors === null ? [] : $this->_errors;
+            return $this->_errors ?: [];
         }
         
-        return isset($this->_errors[$attribute]) ? $this->_errors[$attribute] : [];
+        return $this->_errors[$attribute] ?? [];
     }
     
     /**
@@ -80,16 +82,16 @@ class Error extends Service
      * @return array
      * @see getModelErrors()
      */
-    public function getModelFirstErrors()
+    public function getModelFirstErrors(): array
     {
         if (empty($this->_errors)) {
             return [];
         }
         
         $errors = [];
-        foreach ($this->_errors as $name => $es) {
-            if (!empty($es)) {
-                $errors[$name] = reset($es);
+        foreach ($this->_errors as $name => $error) {
+            if (!empty($error)) {
+                $errors[$name] = reset($error);
             }
         }
         
@@ -109,7 +111,8 @@ class Error extends Service
     }
     
     /**
-     * 直接添加模型的所有错误信息，即模型的Model::$errors
+     * 直接添加模型的所有错误信息，即模型的`\yii\base\Model::getErrors()`
+     * @see \yii\base\Model::getErrors()
      *
      * @param array  $errors
      * @param string $object 操作触发的对象名，一般用get_called_class()或get_class()获取
@@ -184,7 +187,7 @@ class Error extends Service
      * 获取格式化后的错误信息
      *
      * @param array|null  $errors 一维数组
-     * @param null|string $glue 不为'null'时，用该字符串格式化数组
+     * @param null|string $glue   不为'null'时，用该字符串格式化数组
      *
      * @return array|string
      */

@@ -5,6 +5,8 @@
  * @license BSD 3-Clause License
  */
 
+declare(strict_types=1);
+
 namespace EngineCore\enums;
 
 use Yii;
@@ -27,8 +29,8 @@ class YesEnum extends Enums
     protected static function _list(): array
     {
         return [
-            self::NO => Yii::t('Ec/app', 'No'),
-            self::YES => Yii::t('Ec/app', 'Yes'),
+            self::NO => Yii::t('ec/app', 'No'),
+            self::YES => Yii::t('ec/app', 'Yes'),
         ];
     }
     

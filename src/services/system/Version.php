@@ -30,17 +30,17 @@ class Version extends Service
      * 验证版本是否满足
      *
      * @param string $currentVersion 当前版本，通常为特定的版本号，如：`dev-main`,`dev-branch`,`@dev`,`0.1.1`,`0.1-patch`等
-     * @param string $ruleVersion 规则版本，通常包含有特定符号的版本规则，如：`~0.1.1`,`^0.1.1`,`@dev`等
+     * @param string $ruleVersion 规则版本，通常包含有特定符号的版本规则，如：`~0.1.1`,`^0.1.1`,`@dev`,`*`等
      *
      * @return bool
      */
     public function compare($currentVersion, $ruleVersion): bool
     {
-        if ('*' === $ruleVersion
-            || false !== strpos($ruleVersion, 'dev')
-            || false !== strpos($currentVersion, 'dev')
-        ) {
+        if ('*' === $ruleVersion || false !== strpos($ruleVersion, 'dev')) {
             return true;
+        }
+        if (false !== strpos($currentVersion, 'dev')) {
+            return false;
         }
         
         return VersionComparator::compareVersionRange($currentVersion, $ruleVersion);

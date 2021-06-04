@@ -1,15 +1,17 @@
 <?php
 /**
- * @link https://github.com/e-kevin/engine-core
+ * @link      https://github.com/e-kevin/engine-core
  * @copyright Copyright (c) 2020 E-Kevin
- * @license BSD 3-Clause License
+ * @license   BSD 3-Clause License
  */
+
+declare(strict_types=1);
 
 namespace EngineCore\services;
 
 use EngineCore\services\system\Cache;
 use EngineCore\base\Service;
-use EngineCore\services\system\Config;
+use EngineCore\services\system\Setting;
 use EngineCore\services\system\Error;
 use EngineCore\services\system\Mailer;
 use EngineCore\services\system\Validation;
@@ -18,7 +20,7 @@ use EngineCore\services\system\Version;
 /**
  * 系统管理服务类
  *
- * @property Config|Service     $config
+ * @property Setting|Service    $setting
  * @property Validation|Service $validation
  * @property Mailer|Service     $mailer
  * @property Version|Service    $version
@@ -31,7 +33,7 @@ class System extends Service
 {
     
     const
-        CONFIG_SERVICE = 'config', // 系统配置服务类
+        SETTING_SERVICE = 'setting', // 系统设置服务类
         VALIDATION_SERVICE = 'validation', // 规则验证服务类
         MAILER_SERVICE = 'mailer', // 邮件服务类
         VERSION_SERVICE = 'version', // 版本验证服务类
@@ -44,7 +46,7 @@ class System extends Service
     public function coreServices()
     {
         return [
-            self::CONFIG_SERVICE     => ['class' => 'EngineCore\services\system\Config'],
+            self::SETTING_SERVICE    => ['class' => 'EngineCore\services\system\Setting'],
             self::VALIDATION_SERVICE => ['class' => 'EngineCore\services\system\Validation'],
             self::MAILER_SERVICE     => ['class' => 'EngineCore\services\system\Mailer'],
             self::VERSION_SERVICE    => ['class' => 'EngineCore\services\system\Version'],
@@ -54,13 +56,13 @@ class System extends Service
     }
     
     /**
-     * 系统配置服务类
+     * 系统设置服务类
      *
-     * @return Config|Service
+     * @return Setting|Service
      */
-    public function getConfig()
+    public function getSetting()
     {
-        return $this->getService(self::CONFIG_SERVICE);
+        return $this->getService(self::SETTING_SERVICE);
     }
     
     /**

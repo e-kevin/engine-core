@@ -8,7 +8,7 @@
 namespace EngineCore\widgets;
 
 use EngineCore\Ec;
-use EngineCore\extension\RunningExtensionInterface;
+use EngineCore\extension\entity\ExtensionEntityInterface;
 use Yii;
 use yii\base\Widget;
 
@@ -29,8 +29,8 @@ class Issue extends Widget
     {
         parent::init();
         
-        /** @var RunningExtensionInterface $runningExtension */
-        $runningExtension = Ec::getRunningExtension($this->context ?? Yii::$app->controller);
+        /** @var ExtensionEntityInterface $runningExtension */
+        $runningExtension = Ec::$service->getExtension()->entity($this->context ?? Yii::$app->controller);
         $config = $runningExtension->getInfo()->getConfiguration();
         $issueUrl = $config->getSupport()->getIssues();
         if (empty($issueUrl) && strpos($config->getHomepage(), 'github.com') !== false) {

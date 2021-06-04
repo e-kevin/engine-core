@@ -21,6 +21,11 @@ class ConsoleHelper extends BaseObject
 {
     
     /**
+     * @var bool 是否显示运行信息
+     */
+    public static $showInfo = false;
+    
+    /**
      * 是否 Windows 系统
      *
      * @return bool
@@ -46,25 +51,27 @@ class ConsoleHelper extends BaseObject
      * 执行控制台命令
      *
      * @param string $cmd 需要执行的命令
-     * @param bool $show 是否显示输出信息，默认显示
+     *
+     * @return bool
      */
-    public static function run($cmd, $show = true)
+    public static function run($cmd): bool
     {
         if (self::isRunningOnWindows()) {
             $cmd = str_replace("\\", "\\\\", $cmd);
         }
         $handler = popen($cmd, 'r');
         while (!feof($handler)) {
-            $show ? self::info(fgets($handler), 1) : fgets($handler);
+            self::$showInfo ? self::info(fgets($handler), 1) : fgets($handler);
         }
-        pclose($handler);
+        
+        return false !== pclose($handler);
     }
     
     /**
      * 显示成功信息
      *
      * @param string $message 需要显示的信息
-     * @param int $rnCount 换行总数
+     * @param int    $rnCount 换行总数
      */
     public static function success($message, $rnCount = 0)
     {
@@ -79,7 +86,7 @@ class ConsoleHelper extends BaseObject
      * 显示错误信息
      *
      * @param string $message 需要显示的信息
-     * @param int $rnCount 换行总数
+     * @param int    $rnCount 换行总数
      */
     public static function error($message, $rnCount = 0)
     {
@@ -94,7 +101,7 @@ class ConsoleHelper extends BaseObject
      * 显示提示信息
      *
      * @param string $message 需要显示的信息
-     * @param int $rnCount 换行总数
+     * @param int    $rnCount 换行总数
      */
     public static function info($message, $rnCount = 0)
     {
@@ -110,7 +117,7 @@ class ConsoleHelper extends BaseObject
      *
      * @param string $message 需要显示的信息
      * @param string $color 文字颜色
-     * @param int $rnCount 换行总数
+     * @param int    $rnCount 换行总数
      */
     public static function writeColorMessage($message, $color, $rnCount = 0)
     {
@@ -122,7 +129,7 @@ class ConsoleHelper extends BaseObject
      * 显示信息
      *
      * @param string $message 需要显示的信息
-     * @param int $rnCount 换行总数
+     * @param int    $rnCount 换行总数
      */
     public static function writeMessage($message, $rnCount = 0)
     {

@@ -171,7 +171,7 @@ class Service extends Component
      *         'class' => '{namespace}\{className}',
      *     ],
      *     'cache' => [
-     *         'class' => 'namespace}\{className}',
+     *         'class' => '{namespace}\{className}',
      *     ],
      * ]
      * ```

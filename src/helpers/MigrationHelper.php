@@ -7,14 +7,12 @@
 
 namespace EngineCore\helpers;
 
-use yii\base\BaseObject;
-
 /**
  * 数据库迁移助手类
  *
  * @author E-Kevin <e-kevin@qq.com>
  */
-class MigrationHelper extends BaseObject
+class MigrationHelper
 {
     
     /**

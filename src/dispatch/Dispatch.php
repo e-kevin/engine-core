@@ -1,8 +1,8 @@
 <?php
 /**
- * @link https://github.com/e-kevin/engine-core
+ * @link      https://github.com/e-kevin/engine-core
  * @copyright Copyright (c) 2020 E-Kevin
- * @license BSD 3-Clause License
+ * @license   BSD 3-Clause License
  */
 
 namespace EngineCore\dispatch;
@@ -58,18 +58,9 @@ class Dispatch extends Action
      * 获取调度响应器
      *
      * @return DispatchResponseInterface|WebDispatchResponse
-     * @throws InvalidConfigException
      */
     public function getResponse()
     {
-        if (null === $this->_response) {
-            if ($this->controller->getDispatchManager()->getGenerator()->isSupportRender()) {
-                $this->setResponse(Ec::getThemeConfig('response')); // 默认为当前主题的'response'
-            } else {
-                throw new InvalidConfigException('The `response` property must be set.');
-            }
-        }
-        
         return $this->_response;
     }
     
@@ -82,11 +73,11 @@ class Dispatch extends Action
      */
     public function setResponse($response)
     {
-        if ($this->controller->getDispatchManager()->getGenerator()->isSupportRender()) {
-            $this->_response = Ec::createObject($response, [$this], WebDispatchResponse::class);
-        } else {
-            $this->_response = Ec::createObject($response, [$this], DispatchResponse::class);
-        }
+        $this->_response = Ec::createObject($response, [$this],
+            $this->controller->getDispatchManager()->isSupportRender()
+                ? WebDispatchResponse::class
+                : DispatchResponse::class
+        );
     }
     
 }

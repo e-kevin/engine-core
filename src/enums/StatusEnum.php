@@ -5,6 +5,8 @@
  * @license BSD 3-Clause License
  */
 
+declare(strict_types=1);
+
 namespace EngineCore\enums;
 
 use Yii;
@@ -27,8 +29,8 @@ class StatusEnum extends Enums
     protected static function _list(): array
     {
         return [
-            self::STATUS_OFF => Yii::t('Ec/app', 'Status off'),
-            self::STATUS_ON  => Yii::t('Ec/app', 'Status on'),
+            self::STATUS_OFF => Yii::t('ec/app', 'Status off'),
+            self::STATUS_ON  => Yii::t('ec/app', 'Status on'),
         ];
     }
     

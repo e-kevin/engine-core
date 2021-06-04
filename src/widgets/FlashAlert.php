@@ -96,7 +96,7 @@ class FlashAlert extends Widget
     {
         parent::init();
 
-        $session = Yii::$app->session;
+        $session = Yii::$app->getSession();
         $flashes = $session->getAllFlashes();
         $appendCss = isset($this->options['class']) ? ' ' . $this->options['class'] : '';
 

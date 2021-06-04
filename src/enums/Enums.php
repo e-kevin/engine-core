@@ -1,9 +1,11 @@
 <?php
 /**
- * @link https://github.com/e-kevin/engine-core
+ * @link      https://github.com/e-kevin/engine-core
  * @copyright Copyright (c) 2020 E-Kevin
- * @license BSD 3-Clause License
+ * @license   BSD 3-Clause License
  */
+
+declare(strict_types=1);
 
 namespace EngineCore\enums;
 
@@ -18,17 +20,23 @@ use Yii;
 abstract class Enums implements EnumInterface
 {
     
+    private static $_list;
+    
     /**
      * {@inheritdoc}
      */
     public static function list($showUnlimited = false)
     {
-        return $showUnlimited
-            ? ArrayHelper::merge(
-                [EnumInterface::UNLIMITED => Yii::t('Ec/app', 'Unlimited')]
-                , static::_list()
-            )
-            : static::_list();
+        if (!isset(static::$_list[$showUnlimited])) {
+            self::$_list[$showUnlimited] = $showUnlimited
+                ? ArrayHelper::merge(
+                    [EnumInterface::UNLIMITED => Yii::t('ec/app', 'Unlimited')],
+                    static::_list()
+                )
+                : static::_list();
+        }
+        
+        return self::$_list[$showUnlimited];
     }
     
     /**

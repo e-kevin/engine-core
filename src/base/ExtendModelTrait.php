@@ -1,9 +1,11 @@
 <?php
 /**
- * @link https://github.com/e-kevin/engine-core
+ * @link      https://github.com/e-kevin/engine-core
  * @copyright Copyright (c) 2020 E-Kevin
- * @license BSD 3-Clause License
+ * @license   BSD 3-Clause License
  */
+
+declare(strict_types=1);
 
 namespace EngineCore\base;
 
@@ -15,9 +17,7 @@ use Yii;
  * Class ExtendModelTrait
  * 扩展模型功能
  *
- * @property int|false                         $cacheDuration
  * @property boolean                           $throwException
- * @property array                             $all
  * @property \EngineCore\services\system\Error $errorService
  *
  * @author E-Kevin <e-kevin@qq.com>
@@ -52,64 +52,12 @@ trait ExtendModelTrait
     }
     
     /**
-     * 获取模型所有数据，通常结合缓存使用
-     *
-     * @return array
-     */
-    public function getAll()
-    {
-        return [];
-    }
-    
-    /**
-     * 清除缓存
-     */
-    public function clearCache()
-    {
-    }
-    
-    private $_cacheDuration;
-    
-    /**
-     * 获取缓存时间间隔
-     *
-     * @return false|int
-     */
-    public function getCacheDuration()
-    {
-        if (null === $this->_cacheDuration) {
-            $this->setCacheDuration();
-        }
-        
-        return $this->_cacheDuration;
-    }
-    
-    /**
-     * 设置缓存时间间隔，默认缓存`一天`
-     *
-     * @param false|int $cacheDuration 缓存时间间隔，默认缓存`一天`
-     *
-     * @return $this
-     */
-    public function setCacheDuration($cacheDuration = 86400)
-    {
-        $this->_cacheDuration = $cacheDuration;
-        
-        return $this;
-    }
-    
-    /**
      * {@inheritdoc}
      * 添加对模型外其它错误信息的判断
      */
     public function hasErrors($attribute = null)
     {
-        $has = parent::hasErrors($attribute);
-        if (!$has) {
-            $has = $this->getErrorService()->hasModelOtherErrors();
-        }
-        
-        return $has;
+        return parent::hasErrors($attribute) ?: $this->getErrorService()->hasModelOtherErrors();
     }
     
     /**

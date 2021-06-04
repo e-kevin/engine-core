@@ -1,9 +1,11 @@
 <?php
 /**
- * @link https://github.com/e-kevin/engine-core
+ * @link      https://github.com/e-kevin/engine-core
  * @copyright Copyright (c) 2020 E-Kevin
- * @license BSD 3-Clause License
+ * @license   BSD 3-Clause License
  */
+
+declare(strict_types=1);
 
 namespace EngineCore\db;
 
@@ -12,6 +14,8 @@ use EngineCore\helpers\MigrationHelper;
 
 /**
  * Class Migration
+ *
+ * @author E-Kevin <e-kevin@qq.com>
  */
 class Migration extends \yii\db\Migration
 {
@@ -45,7 +49,7 @@ class Migration extends \yii\db\Migration
      *
      * @return string
      */
-    protected function buildTableComment(string $comment = '')
+    protected function buildTableComment(string $comment = ''): string
     {
         return $comment !== '' ? ' COMMENT = ' . $this->db->quoteValue($comment) : '';
     }
@@ -67,7 +71,7 @@ class Migration extends \yii\db\Migration
      *
      * @return string
      */
-    public function createTableNameWithCode(string $table)
+    public function createTableNameWithCode(string $table): string
     {
         return MigrationHelper::createTableName($table, $this->randCode);
     }

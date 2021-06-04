@@ -1,8 +1,8 @@
 <?php
 /**
- * @link https://github.com/e-kevin/engine-core
+ * @link      https://github.com/e-kevin/engine-core
  * @copyright Copyright (c) 2020 E-Kevin
- * @license BSD 3-Clause License
+ * @license   BSD 3-Clause License
  */
 
 namespace EngineCore\dispatch;
@@ -14,6 +14,7 @@ use yii\base\Controller;
 use yii\base\InvalidConfigException;
 use yii\base\InvalidRouteException;
 use yii\base\NotSupportedException;
+use yii\web\Application;
 
 /**
  * 系统调度功能（Dispatch）管理抽象类
@@ -28,11 +29,13 @@ use yii\base\NotSupportedException;
  *
  * @property array                                                     $config                全局调度器配置
  * @property array                                                     $controllerDispatchMap 当前控制器的调度器配置
- * @property \EngineCore\web\Controller|\EngineCore\console\Controller $controller            当前控制器的调度器配置
+ * @property \EngineCore\web\Controller|\EngineCore\console\Controller $controller            当前控制器
  * @property array|null                                                $currentDispatchMap    当前调度器配置信息
  * @property string                                                    $requestDispatchId     当前控制器请求的调度器ID
  * @property DispatchGeneratorInterface                                $generator             调度器生成器
- * @property DispatchThemeRuleInterface                                $themeRule             调度器主题规则
+ * @property DispatchThemeInterface                                    $theme                 调度器主题管理器
+ * @property DispatchThemeInterface                                    $parser                调度器配置解析器
+ * @property DispatchRunRuleInterface                                  $runRule               调度器运行模式规则
  *
  * @author E-Kevin <e-kevin@qq.com>
  */
@@ -41,16 +44,15 @@ abstract class AbstractDispatchManager extends BaseObject
     
     /**
      * @var bool 开启主题功能
-     * @see \EngineCore\dispatch\ThemeRule::isEnableTheme() 查看优先级
+     * @see \EngineCore\dispatch\Theme::isEnableTheme() 查看优先级
      */
     public $enableTheme;
     
     /**
-     * 获取不到调度器时，将在调度器目录内的{$defaultThemeName}目录下查找，该功能仅在{{$enableTheme}}开启后生效。
-     *
-     * @var string 默认主题名
+     * @var bool 开启主题严谨模式
+     * @see \EngineCore\dispatch\Theme::isStrict() 查看优先级
      */
-    public $defaultThemeName = 'bootstrap-v3';
+    public $strict;
     
     /**
      * 运行模式，可选值有：
@@ -115,8 +117,17 @@ abstract class AbstractDispatchManager extends BaseObject
      *
      * @return array|null
      */
-    final public function getCurrentDispatchMap()
+    public function getCurrentDispatchMap()
     {
+        // 开启主题功能，则优先获取主题调度配置
+        if ($this->getTheme()->isEnableTheme()) {
+            $themeName = '@' . Ec::$service->getExtension()->getThemeRepository()->getConfig('name');
+            $config = $this->controllerDispatchMap[$themeName][$this->getRequestDispatchId()] ?? null;
+            if (null !== $config) {
+                return $config;
+            }
+        }
+        
         return $this->controllerDispatchMap[$this->getRequestDispatchId()] ?? null;
     }
     
@@ -154,7 +165,7 @@ abstract class AbstractDispatchManager extends BaseObject
      *
      * @return null|Dispatch
      */
-    final public function createDispatch($id)
+    public function createDispatch($id)
     {
         if ('' === $id) {
             $id = $this->getController()->defaultAction;
@@ -170,7 +181,12 @@ abstract class AbstractDispatchManager extends BaseObject
         }
         
         // 生成调度器
-        $dispatch = $this->getGenerator()->createDispatch($config);
+        if (null !== $dispatch = $this->getGenerator()->createDispatch($config)) {
+            if ($this->isSupportRender()) {
+                // 设置主题路径映射
+                $this->getTheme()->setPathMap();
+            }
+        }
         
         $this->resetRequestDispatchId();
         
@@ -232,34 +248,117 @@ abstract class AbstractDispatchManager extends BaseObject
     }
     
     /**
-     * @var ThemeRule 调度器主题规则
+     * @var Theme 调度器主题管理器
      */
-    private $_themeRule;
+    private $_theme;
     
     /**
-     * 获取调度器主题规则
+     * 获取调度器主题
      *
-     * @return DispatchThemeRuleInterface
+     * @return DispatchThemeInterface
      */
-    final public function getThemeRule()
+    final public function getTheme()
     {
-        if (null === $this->_themeRule) {
-            $this->setThemeRule(ThemeRule::class);
+        if (null === $this->_theme) {
+            $this->setTheme(Theme::class);
         }
         
-        return $this->_themeRule;
+        return $this->_theme;
     }
     
     /**
-     * 设置调度器主题规则
+     * 设置调度器主题管理器
      *
      * @param string|array|callable $themeRule
      *
      * @throws InvalidConfigException
      */
-    final public function setThemeRule($themeRule)
+    final public function setTheme($themeRule)
     {
-        $this->_themeRule = Ec::createObject($themeRule, [$this], DispatchThemeRuleInterface::class);
+        $this->_theme = Ec::createObject($themeRule, [$this], DispatchThemeInterface::class);
+    }
+    
+    /**
+     * @var DispatchConfigParserInterface 调度器配置解析器
+     */
+    private $_parser;
+    
+    /**
+     * 获取调度器配置解析器
+     *
+     * @return DispatchConfigParserInterface
+     */
+    final public function getParser()
+    {
+        if (null === $this->_parser) {
+            $this->setParser(SimpleParser::class);
+        }
+        
+        return $this->_parser;
+    }
+    
+    /**
+     * 设置调度器配置解析器
+     *
+     * @param string|array|callable $parser
+     *
+     * @throws InvalidConfigException
+     */
+    final public function setParser($parser)
+    {
+        $this->_parser = Ec::createObject($parser, [$this], DispatchConfigParserInterface::class);
+    }
+    
+    /**
+     * @var RunRule 调度器运行模式规则
+     */
+    private $_runRule;
+    
+    /**
+     * 获取调度器运行模式规则
+     *
+     * @return DispatchRunRuleInterface
+     */
+    final public function getRunRule()
+    {
+        if (null === $this->_runRule) {
+            $this->setRunRule(RunRule::class);
+        }
+        
+        return $this->_runRule;
+    }
+    
+    /**
+     * 设置调度器运行模式规则
+     *
+     * @param string|array|callable $runRule
+     *
+     * @throws InvalidConfigException
+     */
+    final public function setRunRule($runRule)
+    {
+        $this->_runRule = Ec::createObject($runRule, [$this], DispatchRunRuleInterface::class);
+    }
+    
+    /**
+     * 调度器是否支持视图渲染功能
+     *
+     * @param bool $throwException 是否抛出异常
+     *
+     * @return bool
+     * @throws NotSupportedException 不支持视图渲染功能则根据`$throwException`判断是否抛出异常
+     */
+    public function isSupportRender($throwException = false): bool
+    {
+        if (!Yii::$app instanceof Application) {
+            if ($throwException) {
+                throw new NotSupportedException('The current application does not support the dispatch response render function.');
+            } else {
+                return false;
+            }
+        }
+        
+        return true;
     }
     
 }

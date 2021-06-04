@@ -1,9 +1,11 @@
 <?php
 /**
- * @link https://github.com/e-kevin/engine-core
+ * @link      https://github.com/e-kevin/engine-core
  * @copyright Copyright (c) 2020 E-Kevin
- * @license BSD 3-Clause License
+ * @license   BSD 3-Clause License
  */
+
+declare(strict_types=1);
 
 namespace EngineCore\extension\repository\models;
 
@@ -28,7 +30,6 @@ class Controller extends BaseExtensionModel implements ControllerModelInterface
     {
         return ArrayHelper::merge(parent::rules(), [
             // module_id rules
-            'moduleIdRequired'     => ['module_id', 'required'],
             'moduleIdLength'       => ['module_id', 'string', 'max' => 15],
             // controller_id rules
             'controllerIdRequired' => ['controller_id', 'required'],
@@ -44,15 +45,15 @@ class Controller extends BaseExtensionModel implements ControllerModelInterface
     public function attributeLabels()
     {
         return array_merge(parent::attributeLabels(), [
-            'module_id'     => Yii::t('ec/extension', 'Module id'),
-            'controller_id' => Yii::t('ec/extension', 'Controller id'),
+            'module_id'     => Yii::t('ec/modules/extension', 'Module Id'),
+            'controller_id' => Yii::t('ec/modules/extension', 'Controller Id'),
         ]);
     }
     
     public function attributeHints()
     {
         return array_merge(parent::attributeHints(), [
-            'module_id' => Yii::t('ec/extension',
+            'module_id' => Yii::t('ec/modules/extension',
                 'When empty, the extension is `{app}` application extension.',
                 ['app' => Yii::$app->id]
             ),
@@ -64,26 +65,19 @@ class Controller extends BaseExtensionModel implements ControllerModelInterface
      */
     public function afterSave($insert, $changedAttributes)
     {
-        parent::afterSave($insert, $changedAttributes);
         if ($insert) {
+            // 调用扩展内置安装方法
             $this->getInfoInstance()->install();
         }
-        $sameModuleId = $sameControllerId = false;
-        if (isset($changedAttributes['module_id'])) {
-            // 暂不支持多层模块id设置
-            if ($sameModuleId = Yii::$app->controller->module->id == $this->getOldAttribute('module_id')) {
-                Yii::$app->controller->module->id = $changedAttributes['module_id'];
-            }
-        }
-        if (isset($changedAttributes['controller_id'])) {
-            if ($sameModuleId && ($sameControllerId = Yii::$app->controller->id == $this->getOldAttribute('controller_id'))) {
-                Yii::$app->controller->id = $changedAttributes['controller_id'];
-            }
-        }
-        if ($sameControllerId || $sameModuleId) {
+        parent::afterSave($insert, $changedAttributes);
+        
+        if ($insert || isset($changedAttributes['status']) || isset($changedAttributes['module_id']) || isset($changedAttributes['controller_id'])) {
+            // 清理缓存
+            Ec::$service->getExtension()->getRepository()->clearCache();
             Ec::$service->getMenu()->getConfig()->clearCache();
-            Ec::$service->getMenu()->getConfig()->sync();
-            Ec::$service->getExtension()->getEnvironment()->flushConfigFiles(false);
+            Ec::$service->getSystem()->getSetting()->clearCache();
+            // 刷新配置
+            Ec::$service->getExtension()->getEnvironment()->flushConfigFiles();
         }
     }
     

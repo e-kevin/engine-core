@@ -5,10 +5,12 @@
  * @license BSD 3-Clause License
  */
 
+declare(strict_types=1);
+
 namespace EngineCore\extension\repository\configuration;
 
 /**
- * 扩展仓库资源接口类
+ * 扩展仓库资源接口
  *
  * @property string $type
  *

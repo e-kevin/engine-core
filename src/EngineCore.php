@@ -1,25 +1,24 @@
 <?php
 /**
- * @link https://github.com/e-kevin/engine-core
+ * @link      https://github.com/e-kevin/engine-core
  * @copyright Copyright (c) 2020 E-Kevin
- * @license BSD 3-Clause License
+ * @license   BSD 3-Clause License
  */
+
+declare(strict_types=1);
 
 namespace EngineCore;
 
 use EngineCore\{
-    dispatch\DispatchTrait, extension\RunningExtension, services\ServiceLocator, extension\RunningExtensionInterface,
-    helpers\ArrayHelper
+    services\ServiceLocator, helpers\ArrayHelper
 };
 use Yii;
 use yii\{
-    base\BaseObject, base\Controller, base\InvalidConfigException, helpers\VarDumper, web\Application
+    base\BaseObject, base\InvalidConfigException, helpers\VarDumper
 };
 
 /**
  * Class EngineCore
- *
- * @property RunningExtensionInterface $runningExtension 指定控制器所属的扩展信息详情
  *
  * @author E-Kevin <e-kevin@qq.com>
  */
@@ -70,25 +69,22 @@ class EngineCore extends BaseObject
     /**
      * 浏览器友好的变量输出
      *
-     * @param mixed   $arr 变量
+     * @param mixed   $arr            变量
      * @param string  $getCalledClass 触发该方法的类名
-     * @param boolean $echo 是否输出 默认为True 如果为false 则返回输出字符串
-     * @param string  $label 标签 默认为空
-     * @param boolean $strict 是否严谨 默认为true
+     * @param boolean $echo           是否输出 默认为True 如果为false 则返回输出字符串
+     * @param string  $label          标签 默认为空
+     * @param boolean $strict         是否严谨 默认为true
      *
      * @return string|void
      */
     public static function dump($arr, $getCalledClass = null, $echo = true, $label = null, $strict = true)
     {
         if (YII_DEBUG && $getCalledClass) {
-            echo '================ START: ' . $getCalledClass . ' ================';
+            echo '<pre>================ START: ' . $getCalledClass . ' ================</pre>';
         }
         ArrayHelper::dump($arr, $echo, $label, $strict);
         if (YII_DEBUG && $getCalledClass) {
-            echo '================ END: ' . $getCalledClass . ' ================';
-            if (Yii::$app instanceof Application) {
-                echo "<br/>";
-            }
+            echo '<pre>================ END: ' . $getCalledClass . ' ================</pre>';
         }
     }
     
@@ -99,7 +95,7 @@ class EngineCore extends BaseObject
      * [[EngineCore\base\ExtendModelTrait()]]用以支持该方法
      * @see \EngineCore\base\ExtendModelTrait::afterValidate()
      *
-     * @param callable    $callback a valid PHP callback that performs the job. Accepts connection instance as
+     * @param callable    $callback       a valid PHP callback that performs the job. Accepts connection instance as
      *                                    parameter.
      * @param string|null $isolationLevel The isolation level to use for this transaction.
      *
@@ -143,54 +139,10 @@ class EngineCore extends BaseObject
     }
     
     /**
-     * 获取指定控制器所属的扩展信息详情，如果控制器不属于任何一个扩展，则默认为EngineCore扩展
-     *
-     * @see RunningExtensionInterface::defaultExtension() 默认扩展
-     *
-     * @param Controller|DispatchTrait $controller
-     *
-     * @return object|RunningExtensionInterface
-     */
-    public static function getRunningExtension(Controller $controller)
-    {
-        if (Yii::$container->has('RunningExtension')) {
-            $definition = Yii::$container->definitions['RunningExtension'];
-        } else {
-            $definition['class'] = RunningExtension::class;
-        }
-        
-        return self::createObject($definition, [$controller], RunningExtensionInterface::class);
-    }
-    
-    /**
-     * 获取当前主题的参数配置
-     *
-     * @param string|null $key
-     *
-     * @return string|array|null
-     */
-    public static function getThemeConfig($key = null)
-    {
-        if (isset(Yii::$app->params['themeConfig'])) {
-            $config = Yii::$app->params['themeConfig'];
-        } else {
-            $themeRepository = self::$service->getExtension()->getThemeRepository();
-            $currentTheme = $themeRepository->hasModel() ? $themeRepository->getCurrentTheme(false) : false;
-            $config = $currentTheme ? $currentTheme->getThemeConfig() : [
-                'name'      => 'bootstrap-v3', // 主题名称
-                'response'  => '\EngineCore\web\DispatchResponse', // 主题使用的调度响应器
-                'themePath' => '@app/themes/bootstrap-v3', // 主题视图路径
-            ];
-        }
-        
-        return $key ? ($config[$key] ?? null) : $config;
-    }
-    
-    /**
      * 根据配置数据创建对象，可检测对象是否继承某个类或实现某个接口
      *
      * @param string|array|callable $type
-     * @param array                 $params 构造函数参数
+     * @param array                 $params    构造函数参数
      * @param null                  $reference 检测对象是否继承某个类或实现某个接口
      *
      * @return object

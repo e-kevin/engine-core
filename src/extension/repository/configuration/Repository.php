@@ -5,6 +5,8 @@
  * @license BSD 3-Clause License
  */
 
+declare(strict_types=1);
+
 namespace EngineCore\extension\repository\configuration;
 
 /**
@@ -12,7 +14,7 @@ namespace EngineCore\extension\repository\configuration;
  *
  * @property string $uri
  *
- * @see    https://docs.phpcomposer.com/05-repositories.html
+ * @see https://docs.phpcomposer.com/05-repositories.html
  *
  * @author E-Kevin <e-kevin@qq.com>
  */

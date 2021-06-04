@@ -8,7 +8,7 @@
 namespace EngineCore\web;
 
 /**
- * 调度响应器接口类，用于更改反馈给WEB客户端的表现形式
+ * 调度响应器接口，用于更改反馈给WEB客户端的表现形式
  *
  * @property int   $waitSecond 页面跳转停留时间
  * @property mixed $jumpUrl 页面跳转地址

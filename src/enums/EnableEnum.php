@@ -5,6 +5,8 @@
  * @license BSD 3-Clause License
  */
 
+declare(strict_types=1);
+
 namespace EngineCore\enums;
 
 use Yii;
@@ -27,8 +29,8 @@ class EnableEnum extends Enums
     protected static function _list(): array
     {
         return [
-            self::DISABLE => Yii::t('Ec/app', 'Disable'),
-            self::ENABLE => Yii::t('Ec/app', 'Enable'),
+            self::DISABLE => Yii::t('ec/app', 'Disable'),
+            self::ENABLE => Yii::t('ec/app', 'Enable'),
         ];
     }
     

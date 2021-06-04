@@ -5,6 +5,8 @@
  * @license BSD 3-Clause License
  */
 
+declare(strict_types=1);
+
 namespace EngineCore\extension\repository\info;
 
 use EngineCore\{
@@ -35,7 +37,7 @@ trait ExtensionTrait
     public function getDb()
     {
         if (null === $this->_db) {
-            $this->setDb();
+            $this->setDb('db');
         }
         
         return $this->_db;
@@ -44,9 +46,9 @@ trait ExtensionTrait
     /**
      * 设置数据库连接组件
      *
-     * @param string|array $db DB连接的组件ID或配置，默认为'db'组件
+     * @param Connection|string|array $db DB连接的组件ID或配置
      */
-    public function setDb($db = 'db')
+    public function setDb($db)
     {
         $this->_db = Instance::ensure($db, Connection::class);
         $this->_db->getSchema()->refresh();
@@ -57,8 +59,10 @@ trait ExtensionTrait
      * 执行migrate操作
      *
      * @param string $type 操作类型
+     *
+     * @return bool
      */
-    protected function runMigrate($type)
+    protected function runMigrate($type): bool
     {
         $migrationPath = [];
         foreach ($this->getMigrationPath() as $path) {
@@ -78,12 +82,15 @@ trait ExtensionTrait
                 default:
                     throw new InvalidArgumentException('The "type" property is invalid.');
             }
+            
             //执行
-            ConsoleHelper::run(sprintf("%s {$action} %s",
+            return ConsoleHelper::run(sprintf("%s {$action} %s",
                 Yii::getAlias(ConsoleHelper::getCommander()),
                 implode(' ', $this->migrateParams($migrationPath))
-            ), false);
+            ));
         }
+        
+        return true;
     }
     
     /**

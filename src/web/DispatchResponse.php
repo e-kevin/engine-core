@@ -38,7 +38,7 @@ class DispatchResponse extends \EngineCore\dispatch\DispatchResponse implements 
      */
     public function success($message = '', $url = null)
     {
-        return $this->dispatchJump($message ?: Yii::t('Ec/app', 'Operation successful.'), $url, 1);
+        return $this->dispatchJump($message ?: Yii::t('ec/app', 'Operation successful.'), $url, 1);
     }
     
     /**
@@ -47,7 +47,7 @@ class DispatchResponse extends \EngineCore\dispatch\DispatchResponse implements 
      */
     public function error($message = '', $url = null)
     {
-        return $this->dispatchJump($message ?: Yii::t('Ec/app', 'Operation failure.'), $url, 0);
+        return $this->dispatchJump($message ?: Yii::t('ec/app', 'Operation failure.'), $url, 0);
     }
     
     /**

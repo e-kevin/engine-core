@@ -1,9 +1,11 @@
 <?php
 /**
- * @link https://github.com/e-kevin/engine-core
+ * @link      https://github.com/e-kevin/engine-core
  * @copyright Copyright (c) 2020 E-Kevin
- * @license BSD 3-Clause License
+ * @license   BSD 3-Clause License
  */
+
+declare(strict_types=1);
 
 namespace EngineCore\extension\repository\models;
 
@@ -41,20 +43,20 @@ class Theme extends BaseExtensionModel implements ThemeModelInterface
     public function attributeLabels()
     {
         return array_merge(parent::attributeLabels(), [
-            'theme_id' => Yii::t('ec/extension', 'Theme id'),
+            'theme_id' => Yii::t('ec/modules/extension', 'Theme Id'),
         ]);
     }
     
     /**
      * {@inheritdoc}
      */
-    public function getCurrentUniqueName()
+    public function getActiveTheme($app = null)
     {
         return self::find()
                    ->select(['unique_name'])
                    ->where([
                        'status' => StatusEnum::STATUS_ON,
-                       'app'    => Yii::$app->id,
+                       'app'    => $app ?: Yii::$app->id,
                    ])->scalar();
     }
     
@@ -73,10 +75,19 @@ class Theme extends BaseExtensionModel implements ThemeModelInterface
      */
     public function afterSave($insert, $changedAttributes)
     {
-        parent::afterSave($insert, $changedAttributes);
         if ($insert) {
+            // 调用扩展内置安装方法
             $this->getInfoInstance()->install();
-            Ec::$service->getExtension()->getEnvironment()->flushConfigFiles(false);
+        }
+        parent::afterSave($insert, $changedAttributes);
+    
+        if ($insert || isset($changedAttributes['status'])) {
+            // 清理缓存
+            Ec::$service->getExtension()->getRepository()->clearCache();
+            Ec::$service->getMenu()->getConfig()->clearCache();
+            Ec::$service->getSystem()->getSetting()->clearCache();
+            // 刷新配置
+            Ec::$service->getExtension()->getEnvironment()->flushConfigFiles();
         }
     }
     

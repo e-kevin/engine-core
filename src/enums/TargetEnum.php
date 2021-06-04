@@ -5,6 +5,8 @@
  * @license BSD 3-Clause License
  */
 
+declare(strict_types=1);
+
 namespace EngineCore\enums;
 
 use Yii;
@@ -27,8 +29,8 @@ class TargetEnum extends Enums
     protected static function _list(): array
     {
         return [
-            self::TARGET_SELF => Yii::t('Ec/app', 'Target self'),
-            self::TARGET_BLANK => Yii::t('Ec/app', 'Target blank'),
+            self::TARGET_SELF => Yii::t('ec/app', 'Target self'),
+            self::TARGET_BLANK => Yii::t('ec/app', 'Target blank'),
         ];
     }
     

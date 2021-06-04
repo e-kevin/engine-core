@@ -28,10 +28,23 @@ class ExtensionController extends Controller
     public function actionFlushConfigFiles()
     {
         $this->stdout("====== Creating the extension config files ======\n", Console::FG_YELLOW);
-        foreach (Ec::$service->getExtension()->getEnvironment()->flushConfigFiles() as $file) {
-            $this->stdout(" {$file}\n");
+        $files = Ec::$service->getExtension()->getEnvironment()->flushConfigFiles();
+        if (!empty($files['success'])) {
+            $this->stdout(" " . (count($files['success'])) . " configuration files are created successfully:\n", Console::FG_GREEN);
+            foreach ($files['success'] as $file) {
+                $this->stdout(" {$file}\n");
+            }
+        }
+        if (!empty($files['fail'])) {
+            $this->stdout(" " . (count($files['fail'])) . " configuration files are created failed:\n", Console::FG_RED);
+            foreach ($files['fail'] as $file) {
+                $this->stdout(" {$file}\n");
+            }
         }
         $this->stdout("\n");
+        if (!Ec::$service->getExtension()->getRepository()->hasModel()) {
+            $this->stdout("The extension model class is not set.\n\n", Console::FG_RED);
+        }
         
         return ExitCode::OK;
     }
@@ -41,8 +54,7 @@ class ExtensionController extends Controller
      */
     public function actionUpdateRepository()
     {
-        $this->stdout("====== Extension repository updated ======\n", Console::FG_YELLOW);
-        $this->stdout("\n");
+        $this->stdout("====== Extension repository updated ======\n\n", Console::FG_YELLOW);
     
         Ec::$service->getExtension()->clearCache();
     

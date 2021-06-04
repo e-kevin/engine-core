@@ -44,11 +44,12 @@ class UrlManager extends Service
         /** @var ModularityInfo $infoInstance */
         $infoInstance = null;
         if (empty($extensionName)) {
-            foreach ($config as $uniqueName => $row) {
-                $infoInstance = $row['infoInstance'];
-                if (Yii::$app->controller->module->id == $infoInstance->getId()) {
-                    $extensionName = $uniqueName;
-                    break;
+            foreach ($config as $app => $row) {
+                foreach ($row as  $uniqueName => $infoInstance) {
+                    if (Yii::$app->controller->module->id == $infoInstance->getId()) {
+                        $extensionName = $uniqueName;
+                        break;
+                    }
                 }
             }
         }

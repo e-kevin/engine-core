@@ -1,9 +1,11 @@
 <?php
 /**
- * @link https://github.com/e-kevin/engine-core
+ * @link      https://github.com/e-kevin/engine-core
  * @copyright Copyright (c) 2020 E-Kevin
- * @license BSD 3-Clause License
+ * @license   BSD 3-Clause License
  */
+
+declare(strict_types=1);
 
 namespace EngineCore\extension\repository\configuration;
 
@@ -33,13 +35,8 @@ class Author extends BaseObject
      *
      * @author E-Kevin <e-kevin@qq.com>
      */
-    public function __construct(
-        $name,
-        $email = null,
-        $homepage = null,
-        $role = null,
-        $config = []
-    ) {
+    public function __construct($name, $email = null, $homepage = null, $role = null, $config = [])
+    {
         $this->_name = $name;
         $this->_email = $email;
         $this->_homepage = $homepage;
@@ -63,7 +60,7 @@ class Author extends BaseObject
      *
      * @return string|null
      */
-    public function getEmail(): string
+    public function getEmail()
     {
         return $this->_email;
     }
@@ -73,7 +70,7 @@ class Author extends BaseObject
      *
      * @return string|null
      */
-    public function getHomepage(): string
+    public function getHomepage()
     {
         return $this->_homepage;
     }
@@ -83,7 +80,7 @@ class Author extends BaseObject
      *
      * @return string|null
      */
-    public function getRole(): string
+    public function getRole()
     {
         return $this->_role;
     }

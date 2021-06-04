@@ -5,11 +5,12 @@
  * @license BSD 3-Clause License
  */
 
+declare(strict_types=1);
+
 namespace EngineCore\services\extension;
 
 use EngineCore\base\Service;
 use EngineCore\db\ActiveRecord;
-use EngineCore\extension\repository\info\ExtensionInfo;
 use EngineCore\extension\repository\models\RepositoryModelInterface;
 use EngineCore\helpers\ArrayHelper;
 use EngineCore\services\Extension;
@@ -85,7 +86,7 @@ abstract class BaseCategoryRepository extends Service implements RepositoryInter
         if (null === $this->_installedConfiguration) {
             $this->_installedConfiguration = [];
             foreach ($this->getDbConfiguration() as $app => $row) {
-                foreach ($row as $uniqueName => $v) {
+                foreach ($row as $uniqueName => $data) {
                     if (isset($this->getLocalConfiguration()[$app][$uniqueName])) {
                         $this->_installedConfiguration[$app][$uniqueName] = $this->getLocalConfiguration()[$app][$uniqueName];
                     }
@@ -95,14 +96,6 @@ abstract class BaseCategoryRepository extends Service implements RepositoryInter
         
         return $this->_installedConfiguration;
     }
-    
-    /**
-     * 配置扩展信息类的属性，一般用于同步数据库里的数据到信息类里
-     *
-     * @param ExtensionInfo $info 扩展信息类
-     * @param array         $config 数据库里的配置数据
-     */
-    abstract public function configureInfo($info, $config = []);
     
     /**
      * {@inheritdoc}

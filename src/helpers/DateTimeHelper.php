@@ -36,13 +36,13 @@ class DateTimeHelper
     public static function getTimeUnitList()
     {
         return [
-            self::HOUR => Yii::t('Ec/app', 'Hour'),
-            self::MINUTE => Yii::t('Ec/app', 'Minute'),
-            self::SECOND => Yii::t('Ec/app', 'Second'),
-            self::YEAR => Yii::t('Ec/app', 'Year'),
-            self::MONTH => Yii::t('Ec/app', 'Month'),
-            self::DAY => Yii::t('Ec/app', 'Day'),
-            self::WEEK => Yii::t('Ec/app', 'Week'),
+            self::HOUR => Yii::t('ec/app', 'Hour'),
+            self::MINUTE => Yii::t('ec/app', 'Minute'),
+            self::SECOND => Yii::t('ec/app', 'Second'),
+            self::YEAR => Yii::t('ec/app', 'Year'),
+            self::MONTH => Yii::t('ec/app', 'Month'),
+            self::DAY => Yii::t('ec/app', 'Day'),
+            self::WEEK => Yii::t('ec/app', 'Week'),
         ];
     }
     
@@ -124,19 +124,19 @@ class DateTimeHelper
         
         switch (true) {
             case $timestamp >= $afterTomorrow && $timestamp < $afterTomorrow + $oneDayTimestamp :
-                return Yii::t('Ec/app', 'The day after tomorrow {time}', ['time' => date('H:i', $timestamp)]);
+                return Yii::t('ec/app', 'The day after tomorrow {time}', ['time' => date('H:i', $timestamp)]);
             case $timestamp >= $tomorrow && $timestamp < $afterTomorrow :
-                return Yii::t('Ec/app', 'Tomorrow {time}', ['time' => date('H:i', $timestamp)]);
+                return Yii::t('ec/app', 'Tomorrow {time}', ['time' => date('H:i', $timestamp)]);
             case $timestamp >= $todayZero && $timestamp < $tomorrow :
                 if ($timeDiff < (3600 * 8)) {
                     return Yii::$app->getFormatter()->asRelativeTime($timestamp);
                 } else {
-                    return Yii::t('Ec/app', 'Today {time}', ['time' => date('H:i', $timestamp)]);
+                    return Yii::t('ec/app', 'Today {time}', ['time' => date('H:i', $timestamp)]);
                 }
             case $timestamp >= $yesterday && $timestamp < $todayZero :
-                return Yii::t('Ec/app', 'Yesterday {time}', ['time' => date('H:i', $timestamp)]);
+                return Yii::t('ec/app', 'Yesterday {time}', ['time' => date('H:i', $timestamp)]);
             case $timestamp >= $beforeYesterday && $timestamp < $yesterday :
-                return Yii::t('Ec/app', 'The day before yesterday {time}', ['time' => date('H:i', $timestamp)]);
+                return Yii::t('ec/app', 'The day before yesterday {time}', ['time' => date('H:i', $timestamp)]);
             default :
                 if ($timeDiff > $yearDiff) {
                     return date('Y-m-d H:i', $timestamp);

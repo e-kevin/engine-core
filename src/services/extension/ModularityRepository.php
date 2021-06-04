@@ -1,9 +1,11 @@
 <?php
 /**
- * @link https://github.com/e-kevin/engine-core
+ * @link      https://github.com/e-kevin/engine-core
  * @copyright Copyright (c) 2020 E-Kevin
- * @license BSD 3-Clause License
+ * @license   BSD 3-Clause License
  */
+
+declare(strict_types=1);
 
 namespace EngineCore\services\extension;
 
@@ -65,6 +67,7 @@ class ModularityRepository extends BaseCategoryRepository
     {
         $app = $app ?: Yii::$app->id;
         $configuration = $this->getConfigurationByApp(false, $app);
+        // 不存在扩展则返回null
         if (!isset($configuration[$uniqueName])) {
             return null;
         }
@@ -81,6 +84,8 @@ class ModularityRepository extends BaseCategoryRepository
                 'module_id'   => $infoInstance->getId(),
                 'status'      => StatusEnum::STATUS_ON,
                 'app'         => $app,
+                'version'     => $infoInstance->getConfiguration()->getVersion(),
+                'bootstrap'   => intval($infoInstance->getBootstrap()),
             ]);
         }
         
@@ -118,30 +123,20 @@ class ModularityRepository extends BaseCategoryRepository
      *
      * @return array 未安装的模块ID
      */
-//    public function getUninstalledModuleIdByApp()
-//    {
-//        $installed = $this->getDbConfiguration();
-//        $configuration = $this->getConfigurationByApp();
-//        // 获取未安装的模块扩展配置
-//        foreach ($configuration as $uniqueName => $row) {
-//            // 剔除已安装的模块
-//            if (isset($installed[$uniqueName])) {
-//                unset($configuration[$uniqueName]);
-//                continue;
-//            }
-//        }
-//
-//        return ArrayHelper::getColumn($configuration, 'infoInstance.id');
-//    }
-    
-    /**
-     * {@inheritdoc}
-     */
-    public function configureInfo($info, $config = [])
+    public function getUninstalledModuleIdByApp()
     {
-        Yii::configure($info, [
-            'id' => $config['module_id'],
-        ]);
+        $installed = $this->getDbConfiguration();
+        $configuration = $this->getConfigurationByApp();
+        // 获取未安装的模块扩展配置
+        foreach ($configuration as $uniqueName => $infoInstance) {
+            // 剔除已安装的模块
+            if (isset($installed[$infoInstance->getApp()][$uniqueName])) {
+                unset($configuration[$uniqueName]);
+                continue;
+            }
+        }
+        
+        return ArrayHelper::getColumn($configuration, 'id');
     }
     
 }

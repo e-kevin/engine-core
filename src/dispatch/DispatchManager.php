@@ -1,8 +1,8 @@
 <?php
 /**
- * @link https://github.com/e-kevin/engine-core
+ * @link      https://github.com/e-kevin/engine-core
  * @copyright Copyright (c) 2020 E-Kevin
- * @license BSD 3-Clause License
+ * @license   BSD 3-Clause License
  */
 
 namespace EngineCore\dispatch;
@@ -37,17 +37,15 @@ class DispatchManager extends AbstractDispatchManager
             // 合并当前控制器的调度配置数据，全局配置数据优先级最高
             $dispatchMap = ArrayHelper::merge(
                 $this->getController()->dispatchMap
-                    ? $this->getGenerator()->getParser()->normalize($this->getController()->dispatchMap)
+                    ? $this->getParser()->normalize($this->getController()->dispatchMap)
                     : [],
                 isset($this->config[$this->getController()->getUniqueId()]['dispatchMap'])
                     // 当前控制器的全局调度配置数据
-                    ? $this->getGenerator()->getParser()->normalize($this->config[$this->getController()
-                    ->getUniqueId()]['dispatchMap'])
+                    ? $this->getParser()->normalize($this->config[$this->getController()->getUniqueId()]['dispatchMap'])
                     : []
             );
             // 当前控制器的默认调度配置数据
-            $defaultDispatchMap = $this->getGenerator()->getParser()->normalize($this->getController()
-                ->getDefaultDispatchMap());
+            $defaultDispatchMap = $this->getParser()->normalize($this->getController()->getDefaultDispatchMap());
             // 当前调度器不存在调度配置数据，则获取默认调度配置数据
             if (empty($dispatchMap)) {
                 return $this->_controllerDispatchMap = $defaultDispatchMap;
@@ -77,13 +75,13 @@ class DispatchManager extends AbstractDispatchManager
      *
      * @param array $config 调度器配置数据，支持的键名参见：
      *
-     * @see getDispatchConfigKey()
+     * @see       getDispatchConfigKey()
      *
      * @example
      * 环境:
      * @extensions目录，系统扩展目录，用于存放系统扩展。
-     * @developer目录，开发者目录，用于存放一些需要对系统扩展进行二次开发的文件。
-     * @app目录，项目目录，如：@backend、@frontend，目录结构如下：
+     * @developer 目录，开发者目录，用于存放一些需要对系统扩展进行二次开发的文件。
+     * @app       目录，项目目录，如：@backend、@frontend，目录结构如下：
      * @app
      *      - controllers // 存放控制器
      *          - SiteController
@@ -96,7 +94,7 @@ class DispatchManager extends AbstractDispatchManager
      *    现在为'SiteController'控制器添加一个用于测试的调度器，调度器位于'@app/dispatches'目录下，名为'Test'。
      *    现在可通过以下方式进行添加，而无需更改'SiteController'文件，从而避免升级等操作可能导致更改被覆盖的问题。
      *    [
-     *         // 用路由地址为键名，该键名为控制器实际对应的路由名称
+     *         // 路由地址为键名，该键名为控制器实际对应的路由名称
      *         'site' => [
      *             // 通过调度映射配置进行添加
      *             'dispatchMap' => [ // 通过该键名对调度器进行配置
@@ -128,7 +126,7 @@ class DispatchManager extends AbstractDispatchManager
      *    配置完成后，通过路由地址'site/index'进行访问的结果其实是由Test调度器来实现的。
      * 3、多个操作用同一个调度器来实现：
      *    假如'SiteController'有三个操作，'index','about','contact'。这三个操作只是简单地进行页面渲染输出，
-     *    即'return $this->render();'。因为拥有相似的业务内容，我们可以新建一个名为'Common'的调度器，内容大概如下：
+     *    如'return $this->render();'。因为拥有相似的业务内容，我们可以新建一个名为'Common'的调度器，内容大概如下：
      * ```php
      *  public function run()
      * {
@@ -137,7 +135,7 @@ class DispatchManager extends AbstractDispatchManager
      * ```
      * [[render($view, $assign)]]为调度器基类封装用来渲染页面的方法，此处不明确指定'$view'参数，[[render()]]函数会根据
      * 当前的请求调度器ID来渲染相关的页面，此处分别为'index','about','contact'。
-     * @see \EngineCore\web\DispatchResponse::render();
+     * @see       \EngineCore\web\DispatchResponse::render();
      *
      * 调度器位于'@app/dispatches/Common'，现在进行配置：
      *    [
@@ -152,21 +150,21 @@ class DispatchManager extends AbstractDispatchManager
      *    ]
      * 配置完成后，通过路由地址'site/index'，'site/about'，'site/contact'进行访问的结果其实是由Common调度器来实现的。
      * 4、对系统扩展进行二次开发：
-     *    假如现在有一个系统扩展'@extensions/yii2-controller-site'，目录结构如下：
+     *    假如现在有一个系统扩展'@extensions/engine-core/controller-backend-site'，目录结构如下：
      * @extensions
-     *      - yii2-controller-site
-     *          - controllers // 存放控制器
+     *      - engine-core
+     *          - controller-backend-site
      *              - SiteController
-     *          - dispatches // 存放调度器
-     *              - Index //Index调度器
+     *              - dispatches // 存放调度器
+     *                  - Index //Index调度器
      *    开发者目录结构如下（和@extensions保持一致）：
      * @developer
-     *      - yii2-controller-site
-     *          - controllers // 存放控制器
-     *          - dispatches // 存放调度器
+     *      - engine-core
+     *          - controller-backend-site
+     *              - dispatches // 存放调度器
      *
      *    当系统扩展需要进行二次开发时，我们不建议直接修改源码，此时只需把需要修改的文件或需要新增的文件存放在
-     * @developer目录里对应的路径目录内，再进行配置即可。遵循该守则，即可通过配置['run' => 1]属性值，
+     * @developer 目录里对应的路径目录内，再进行配置即可。遵循该守则，即可通过配置['run' => 1]属性值，
      * 让调度管理器直接从@developer目录里调用相关文件。
      *
      *    现在为系统扩展'SiteController'新增一个没有的操作方法：
@@ -176,13 +174,12 @@ class DispatchManager extends AbstractDispatchManager
      *          'run' => 1,
      *          'dispatchMap' => [
      *              // 此处只需设置路由地址名即可，系统会自动根据'test'名获取'Test'调度器
-     *              'test', // 位于@developer/yii2-controller-site/dispatches/Test
+     *              'test', // 位于@developer/engine-core/controller-backend-site/dispatches/Test
      *          ],
      *      ],
      *    ]
      *
      * 配置完成后，通过路由地址'site/test'即可正常看到由Test生成的结果。
-     *
      *
      * 调度器配置同样适用于模块扩展的设置：
      * [
@@ -197,15 +194,15 @@ class DispatchManager extends AbstractDispatchManager
      */
     public function setConfig(array $config): array
     {
-        foreach ($config as $controllerUniqueId => $value) {
+        foreach ($config as $rout => $value) {
             // 过滤不规范的配置格式
-            if (is_int($controllerUniqueId) || !is_array($value)) {
+            if (is_int($rout) || !is_array($value)) {
                 continue;
             }
             foreach ($this->getDispatchConfigKey() as $key) {
                 // 目前仅支持设置调度器所需要的参数配置
                 if (isset($value[$key])) {
-                    $this->_config[$controllerUniqueId][$key] = $value[$key];
+                    $this->_config[$rout][$key] = $value[$key];
                 }
             }
         }

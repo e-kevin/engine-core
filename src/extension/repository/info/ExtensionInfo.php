@@ -1,35 +1,47 @@
 <?php
 /**
- * @link https://github.com/e-kevin/engine-core
+ * @link      https://github.com/e-kevin/engine-core
  * @copyright Copyright (c) 2020 E-Kevin
- * @license BSD 3-Clause License
+ * @license   BSD 3-Clause License
  */
+
+declare(strict_types=1);
 
 namespace EngineCore\extension\repository\info;
 
 use EngineCore\Ec;
+use EngineCore\extension\setting\SettingProviderInterface;
 use EngineCore\extension\repository\configuration\Configuration;
 use EngineCore\helpers\SecurityHelper;
+use Yii;
 use yii\base\BaseObject;
 use yii\base\InvalidConfigException;
 
 /**
  * 扩展信息基础类
  *
- * @property array         $commonConfig     扩展公共配置信息，只读属性
- * @property array         $config           扩展配置信息，只读属性
- * @property Configuration $configuration    扩展配置文件的配置信息
- * @property string        $type             扩展所属类型，只读属性，【模块、控制器、主题】类型
- * @property string        $category         扩展所属分类，只读属性
- * @property string        $remark           扩展备注，只读属性
- * @property string        $name             扩展名，只读属性
- * @property string        $uniqueName       扩展唯一名，只读属性
- * @property string        $uniqueId         扩展唯一ID
- * @property string        $id               扩展ID，读写属性
- * @property string        $app              应用ID，只读属性
- * @property array|null    $autoloadPsr4     PSR-4命名空间，只读属性
- * @property array|null    $autoloadPsr0     PSR-0命名空间，只读属性
- * @property array         $extraConfig      扩展额外配置数据
+ * @property array         $config               扩展配置信息，只读属性
+ * @property Configuration $configuration        扩展配置文件的配置信息
+ * @property string        $type                 扩展所属类型，只读属性
+ * @property int           $category             扩展所属分类，只读属性
+ * @property string        $remark               扩展备注，只读属性
+ * @property string        $name                 扩展名，只读属性
+ * @property string        $uniqueName           扩展唯一名，只读属性
+ * @property string        $uniqueId             扩展唯一ID
+ * @property string        $id                   扩展ID，读写属性
+ * @property string        $app                  应用ID，只读属性
+ * @property array|null    $autoloadPsr4         PSR-4命名空间，只读属性
+ * @property array|null    $autoloadPsr0         PSR-0命名空间，只读属性
+ * @property array         $menus                扩展菜单信息，只读属性
+ * @property array         $settings             扩展设置信息，只读属性
+ * @property string        $migrationTable       扩展迁移历史数据库表名，只读属性
+ * @property array         $migrationPath        数据库迁移路径，只读属性
+ * @property array         $migrationNamespaces  数据库迁移命名空间，只读属性
+ * @property bool          $isSystem             是否为系统扩展，只读属性
+ * @property bool          $isEnable             扩展是否激活，只读属性
+ * @property bool          $canInstall           是否可以安装，只读属性
+ * @property bool          $canUninstall         是否可以卸载，只读属性
+ * @property int           $runMode              扩展运行模式，只读属性
  *
  * @author E-Kevin <e-kevin@qq.com>
  */
@@ -42,8 +54,7 @@ class ExtensionInfo extends BaseObject
          * 添加表前缀随机码可明确想要操作的数据库表。
          *
          * 建议每个扩展都自定义一个专属的随机码。默认的随机码预留给EngineCore使用
-         *
-         * @see \EngineCore\helpers\StringHelper::randString()
+         * 随机码生成方式参见：@see \EngineCore\helpers\StringHelper::randString()
          */
         EXT_RAND_CODE = 'viMJHk_',
         // 运行模式
@@ -53,14 +64,17 @@ class ExtensionInfo extends BaseObject
         TYPE_MODULE = 'module', // 模块扩展
         TYPE_CONTROLLER = 'controller', // 控制器扩展
         TYPE_THEME = 'theme', // 主题扩展
+        TYPE_CONFIG = 'config', // 系统配置扩展
         // 扩展分类
-        CATEGORY_NONE = 'category_none', // 默认扩展不属于任何分类
-        CATEGORY_SYSTEM = 'category_system', // 系统分类
-        CATEGORY_EXTENSION = 'category_extension', // 扩展模块分类
-        CATEGORY_MENU = 'category_menu', // 菜单分类
-        CATEGORY_ACCOUNT = 'category_account', // 用户分类
-        CATEGORY_PASSPORT = 'category_passport', // 通行证分类
-        CATEGORY_SECURITY = 'category_security'; // 安全分类
+        CATEGORY_NONE = 0, // 默认扩展不属于任何分类
+        CATEGORY_SYSTEM = 1, // 系统分类
+        CATEGORY_EXTENSION = 2, // 扩展管理分类
+        CATEGORY_INSTALLATION = 3, // 安装向导分类
+        CATEGORY_MENU = 4, // 菜单分类
+        CATEGORY_ACCOUNT = 5, // 用户分类
+        CATEGORY_PASSPORT = 6, // 通行证分类
+        CATEGORY_SECURITY = 7, // 安全分类
+        CATEGORY_BACKEND_HOME = 8; // 后台主页分类
     
     /**
      * @var array 必须设置的属性值
@@ -109,7 +123,7 @@ class ExtensionInfo extends BaseObject
      *
      * @return string
      */
-    public function getId()
+    public function getId(): string
     {
         return $this->id;
     }
@@ -134,7 +148,7 @@ class ExtensionInfo extends BaseObject
      *
      * @return string
      */
-    final public function getApp()
+    final public function getApp(): string
     {
         return $this->_app;
     }
@@ -149,7 +163,7 @@ class ExtensionInfo extends BaseObject
      *
      * @return string
      */
-    public function getName()
+    public function getName(): string
     {
         return $this->name;
     }
@@ -167,26 +181,26 @@ class ExtensionInfo extends BaseObject
     }
     
     /**
-     * 获取扩展所属类型，【模块、控制器、主题】类型
+     * 获取扩展所属类型
      *
      * @return string
      */
     public function getType(): string
     {
-        return null;
+        return '';
     }
     
     /**
-     * @var string 扩展所属分类
+     * @var int 扩展所属分类
      */
     protected $category = self::CATEGORY_NONE;
     
     /**
      * 获取扩展所分类
      *
-     * @return string
+     * @return int
      */
-    final public function getCategory(): string
+    final public function getCategory(): int
     {
         return $this->category;
     }
@@ -198,13 +212,23 @@ class ExtensionInfo extends BaseObject
      *
      * @return Configuration
      */
-    final public function getConfiguration()
+    final public function getConfiguration(): Configuration
     {
         if (null === $this->_configuration) {
             $this->_configuration = Ec::$service->getExtension()->getRepository()->getFinder()->getConfiguration()[$this->getUniqueName()];
         }
         
         return $this->_configuration;
+    }
+    
+    /**
+     * 设置扩展配置文件的配置信息
+     *
+     * @param Configuration $configuration
+     */
+    final public function setConfiguration(Configuration $configuration)
+    {
+        $this->_configuration = $configuration;
     }
     
     private $_uniqueName;
@@ -214,7 +238,7 @@ class ExtensionInfo extends BaseObject
      *
      * @return string
      */
-    final public function getUniqueName()
+    final public function getUniqueName(): string
     {
         return $this->_uniqueName;
     }
@@ -224,7 +248,7 @@ class ExtensionInfo extends BaseObject
      *
      * @return string
      */
-    final public function getUniqueId()
+    final public function getUniqueId(): string
     {
         return SecurityHelper::hash($this->getUniqueName());
     }
@@ -267,6 +291,9 @@ class ExtensionInfo extends BaseObject
      */
     public function install(): bool
     {
+        // 加载翻译文件配置
+        Ec::$service->getExtension()->getEnvironment()->loadTranslationConfig($this);
+        
         return true;
     }
     
@@ -295,7 +322,9 @@ class ExtensionInfo extends BaseObject
      *
      * 可用配置键名和'main.php'等配置文件一样，如：
      * - `components`
-     * - `params`
+     * - `params`: 如果是系统设置数据，必须放在`'system-setting'`键名的数组里，参见：
+     * @see SettingProviderInterface::SETTING_KEY
+     * @see SettingProviderInterface::getDefaultConfig()
      * - `modules`
      * - `controllerMap`
      *
@@ -331,7 +360,7 @@ class ExtensionInfo extends BaseObject
      * ]
      * ```
      *
-     * 2、当前应用配置：这是默认的配置方式，格式如下：
+     * 2、当前应用配置：每个应用均使用该配置，这是默认的配置方式，格式如下：
      * ```php
      * [
      *  'components' => [],
@@ -341,11 +370,136 @@ class ExtensionInfo extends BaseObject
      * ]
      * ```
      *
+     * 注意：
+     * 1、控制器扩展无需明确配置，系统会自动添加相应的`'controllerMap'`配置。
+     * 2、支持链式键名配置方式。
+     *
      * @return array
      */
     public function getConfig(): array
     {
         return [];
+    }
+    
+    /**
+     * 获取扩展菜单信息
+     *
+     * 配置格式参见：
+     * @see \EngineCore\extension\menu\MenuProviderTrait::getDefaultConfig()
+     *
+     * @return array
+     */
+    public function getMenus(): array
+    {
+        return [];
+    }
+    
+    /**
+     * 获取扩展设置信息
+     *
+     * 配置格式参见：
+     * @see \EngineCore\extension\setting\SettingProviderTrait::getDefaultConfig()
+     *
+     * @return array
+     */
+    public function getSettings(): array
+    {
+        return [];
+    }
+    
+    /**
+     * 获取扩展迁移历史数据库表名
+     *
+     * @return string
+     */
+    public function getMigrationTable(): string
+    {
+        return '{{%migration}}';
+    }
+    
+    /**
+     * 获取扩展数据库迁移路径
+     *
+     * @return array
+     */
+    public function getMigrationPath(): array
+    {
+        return [$this->getAutoloadPsr4()['path'] . DIRECTORY_SEPARATOR . 'migrations'];
+    }
+    
+    /**
+     * 获取扩展数据库迁移命名空间
+     *
+     * @return array
+     */
+    public function getMigrationNamespaces(): array
+    {
+        return [];
+    }
+    
+    protected $isSystem = false;
+    
+    /**
+     * 获取是否为系统扩展
+     *
+     * @return bool
+     */
+    public function getIsSystem(): bool
+    {
+        $isSystem = Ec::$service->getExtension()
+                                ->getRepository()
+                                ->getDbConfiguration()[$this->getApp()][$this->getUniqueName()][0]['is_system'] ?? $this->isSystem;
+        
+        return boolval($isSystem);
+    }
+    
+    protected $isEnable = false;
+    
+    /**
+     * 获取扩展是否激活
+     *
+     * @return bool
+     */
+    public function getIsEnable(): bool
+    {
+        $isEnable = Ec::$service->getExtension()
+                                ->getRepository()
+                                ->getDbConfiguration()[$this->getApp()][$this->getUniqueName()][0]['status'] ?? $this->isEnable;
+        
+        return boolval($isEnable);
+    }
+    
+    /**
+     * 获取扩展是否可以安装
+     *
+     * @return bool
+     */
+    public function getCanInstall(): bool
+    {
+        return !isset(Ec::$service->getExtension()->getRepository()->getDbConfiguration()[$this->getApp()][$this->getUniqueName()]);
+    }
+    
+    /**
+     * 获取扩展是否可以卸载
+     *
+     * @return bool
+     */
+    public function getCanUninstall(): bool
+    {
+        return !$this->getIsSystem() && !$this->getCanInstall();
+    }
+    
+    protected $runMode = self::RUN_MODULE_EXTENSION;
+    
+    /**
+     * 获取扩展运行模式
+     *
+     * @return int
+     */
+    public function getRunMode()
+    {
+        return Ec::$service->getExtension()->getRepository()
+                           ->getDbConfiguration()[$this->getApp()][$this->getUniqueName()][0]['run'] ?? $this->runMode;
     }
     
 }

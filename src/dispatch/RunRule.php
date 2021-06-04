@@ -17,21 +17,21 @@ use yii\base\BaseObject;
  * 运行模式，可选值有：
  *  - 0: 运行系统扩展，运行在'@extensions'目录下的扩展
  * @see \EngineCore\extension\repository\info\ExtensionInfo::RUN_MODULE_EXTENSION
- *  - 1: 运行开发者扩展，运行在'@developer'目录下的扩展
+ *  - 1: 运行开发者扩展，运行在项目内任何目录下的扩展
  * @see \EngineCore\extension\repository\info\ExtensionInfo::RUN_MODULE_DEVELOPER
+ *
+ * @extensions目录里的为系统扩展
+ * @developer、@app(如：@backend、@frontend)等目录里的均被视为开发者扩展，因为这些目录均是开发者自行开发的功能文件。
+ * 而@developer目录，则是专门用于存放对@extensions目录进行二次开发的文件。
  *
  * 约定：
  *  - 系统扩展控制器，位于项目内'@extensions'目录下的控制器
  *  - 开发者控制器，位于项目内'@developer'目录下的控制器
  *  - 用户自定义控制器，位于项目内任何地方，如'@backend/controllers'、'@frontend/controllers'目录下的控制器
  *
- * @extensions为系统扩展
- * @developer、@app(如：@backend、@frontend)等均被视为开发者扩展，因为这些目录均是开发者自行开发的功能文件。
- * 而@developer目录，则是专门用于存放对@extensions目录进行二次开发的文件。
- *
  * 注意：
  * 为保证所有基于EngineCore核心框架的项目以及扩展能够无缝甚至低改变成本来使用你的项目或扩展，我们不建议开发者自定义
- * ‘调度器运行模式规则’（RunRule）。遵守EngineCore的约定和规范，可以让其它开发者不需付出任何改变成本，
+ * ‘调度器运行模式规则’(RunRule)。遵守EngineCore的约定和规范，可以让其它开发者不需付出任何改变成本，
  * 即可做到最大的兼容性和保持EngineCore配置习惯与逻辑顺序的一致性。
  *
  * 当然，如果是在不更改任何配置习惯和逻辑顺序的前提下对‘调度器运行模式规则’进行优化或功能完善，这是非常好的，
@@ -91,7 +91,7 @@ class RunRule extends BaseObject implements DispatchRunRuleInterface
         if (null === $this->_isDeveloperMode) {
             $this->_isDeveloperMode = false;
             // 当控制器为开发者控制器或用户自定义控制器时，系统将自动视为开发者运行模式。
-            if (!$this->dm->getController()->getExtension()->isExtensionController()) {
+            if (!$this->dm->getController()->getExtension()->isSystemExtension()) {
                 return $this->_isDeveloperMode;
             }
             // 当前调度器不存在调度配置信息则默认为系统扩展运行模式
@@ -108,10 +108,10 @@ class RunRule extends BaseObject implements DispatchRunRuleInterface
              *      'run' => bool,  // 全局配置
              *      'config' => [
              *          '{route}' => [
-             *              'run' => bool,  // 控制器配置
+             *              'run' => {bool}, // 控制器配置
              *              'dispatchMap' => [
              *                  'index' => [
-             *                      'run' => bool,  // 调度器配置
+             *                      'run' => {bool}, // 调度器配置
              *                  ],
              *              ],
              *          ],

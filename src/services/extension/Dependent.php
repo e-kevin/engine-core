@@ -1,17 +1,16 @@
 <?php
 /**
- * @link https://github.com/e-kevin/engine-core
+ * @link      https://github.com/e-kevin/engine-core
  * @copyright Copyright (c) 2020 E-Kevin
- * @license BSD 3-Clause License
+ * @license   BSD 3-Clause License
  */
 
 namespace EngineCore\services\extension;
 
 use EngineCore\Ec;
+use EngineCore\extension\repository\configuration\Configuration;
 use EngineCore\services\Extension;
-use EngineCore\extension\repository\info\ExtensionInfo;
 use EngineCore\base\Service;
-use PackageVersions\Versions;
 use Yii;
 
 /**
@@ -70,7 +69,7 @@ class Dependent extends Service
                             'description'    => 'N/A',
                             'localVersion'   => 'N/A',
                             'requireVersion' => $row['version'],
-                            'requireApp'     => $row['app'], // 为数组时，则要求所依赖的扩展需要同时被多个应用所安装
+                            'requireApp'     => $row['app'],
                             'downloaded'     => false,
                             'installed'      => false,
                         ];
@@ -80,16 +79,25 @@ class Dependent extends Service
                             $arr['downloaded'] = true;
                             $arr['localVersion'] = $currentConfig->getVersion();
                             $arr['description'] = $currentConfig->getDescription();
+                            /*
+                             * 为数组时，则要求在多个应用里必须安装所依赖的扩展，如：
+                             * [
+                             *  "engine-core/theme-bootstrap-v3" => [
+                             *      'app' => ['backend', 'frontend']
+                             *  ]
+                             * ]
+                             * 表示在'backend'和'frontend'应用里必须安装"engine-core/theme-bootstrap-v3"扩展
+                             */
                             foreach ((array)$row['app'] as $requireApp) {
                                 // 验证所请求的应用是否有效，无效则过滤该依赖
                                 if (in_array($requireApp, $currentConfig->getApp())) {
                                     $arr['installed'] = isset($this->service->getRepository()->getDbConfiguration()[$requireApp][$uniqueName]);
                                     $arr['requireApp'] = $requireApp;
-                                    $definition['extensionDependencies'][$app][] = $arr;
+                                    $definition['extensionDependencies'][$app][$uniqueName] = $arr;
                                 }
                             }
                         } else {
-                            $definition['extensionDependencies'][$app][] = $arr;
+                            $definition['extensionDependencies'][$app][$uniqueName] = $arr;
                         }
                     }
                 }
@@ -138,18 +146,13 @@ class Dependent extends Service
             if (is_string($row)) {
                 $row = [
                     'version' => $row,
+                    'app'     => [],
                 ];
             } else {
-                if (!isset($row['version'])) {
-                    $row['version'] = '*';
-                }
-                if (isset($row['app'])) {
-                    if (is_string($row['app'])) {
-                        $row['app'] = [$row['app']];
-                    }
-                    if (in_array('common', $row['app'])) {
-                        $row['app'] = ['common'];
-                    }
+                $row['version'] = $row['version'] ?? '*';
+                $row['app'] = (array)($row['app'] ?? []);
+                if (in_array('common', $row['app'])) {
+                    $row['app'] = ['common'];
                 }
             }
         }
@@ -161,12 +164,11 @@ class Dependent extends Service
      * 检测指定应用下指定扩展是否满足所需的依赖关系
      *
      * @param string $uniqueName 扩展名称
-     * @param string $app 应用ID
-     * @param bool   $verifyInstalled 是否验证扩展是否已经安装，默认验证安装状态
+     * @param string $app        应用ID
      *
      * @return bool
      */
-    public function checkDependencies(string $uniqueName, $app = null, bool $verifyInstalled = true): bool
+    public function checkDependencies(string $uniqueName, $app = null): bool
     {
         if (!isset($this->service->getRepository()->getFinder()->getConfiguration()[$uniqueName])) {
             $this->_info = "不存在扩展：`{$uniqueName}`";
@@ -174,16 +176,29 @@ class Dependent extends Service
             return $this->_status = false;
         }
         
-        $dependencies = $this->service->getRepository()->getFinder()->getConfiguration()[$uniqueName]->getExtensionDependencies();
-        $this->getDependenciesStatus($dependencies[$app ?: Yii::$app->id] ?? [], $uniqueName, $verifyInstalled);
+        $app = $app ?: Yii::$app->id;
+        $configuration = $this->service->getRepository()->getFinder()->getConfiguration()[$uniqueName];
+        if (!in_array($app, $configuration->getApp())) {
+            $this->_info = $uniqueName . '扩展无法在`' . $app . '`应用里安装。';
+            
+            return $this->_status = false;
+        }
+        if (false === $this->validate($configuration->getExtensionDependencies()[$app] ?? [])) {
+            $this->_info = '请先满足扩展依赖关系再执行当前操作。';
+            $this->_data['download'] = $this->getDownload();
+            $this->_data['circular'] = $this->getCircular();
+            $this->_data['conflict'] = $this->getConflict();
+            $this->_status = false;
+        }
         
         return $this->_status;
     }
     
     /**
-     *  获取指定扩展的依赖状态
+     * 验证扩展数据是否通过依赖检测
      *
-     * @param array  $extensions 扩展数据
+     * @param array $extensions 扩展数据
+     *
      * @see normalize()
      * ```php
      * [
@@ -193,160 +208,272 @@ class Dependent extends Service
      *  ]
      * ]
      * ```
-     * @param string $parent 上级扩展名称
-     * @param bool   $verifyInstalled 是否验证扩展是否已经安装，默认验证安装状态
      *
-     * @return array
-     * ```php
-     * [
-     * 'download'  => [], // 提示下载扩展
-     * 'conflict'  => [], // 提示扩展版本冲突
-     * 'uninstall' => [], // 提示需要安装的扩展
-     * 'circular'  => [], // 无限循环依赖的扩展
-     * 'passed'    => [], // 通过依赖检测的扩展
-     * ]
-     * ```
+     * @param bool  $debug      是否开启调试，显示调试数据， 默认不开启
+     * @param array $parent     父级扩展名称
+     *
+     * @return bool
      */
-    public function getDependenciesStatus(array $extensions, string $parent, bool $verifyInstalled = true): array
+    public function validate(array $extensions, $debug = false, array $parent = []): bool
     {
-        $this->_data = [
-            'download'  => [], // 提示下载扩展
-            'conflict'  => [], // 提示扩展版本冲突
-            'uninstall' => [], // 提示需要安装的扩展
-            'circular'  => [], // 无限循环依赖的扩展
-            'passed'    => [], // 通过依赖检测的扩展
-            'parent'    => [], // 上级扩展名称
-        ];
+        $this->_data['checked'] = [];
+        $extensions = $this->checkParent($this->normalize($extensions), $parent);
+        $configuration = $this->service->getRepository()->getFinder()->getConfiguration();
+        /**
+         * 生成已经通过检测的扩展数据
+         *
+         * @param Configuration $config
+         * @param array         $data
+         * @param string        $app
+         */
+        $debugFunc = function (Configuration $config, array $data, string $app) {
+            $uniqueName = $config->getName();
+            $this->_data['checked'][$uniqueName]['version'] = $config->getVersion();
+            $this->_data['checked'][$uniqueName]['app'][$app] = $app;
+            $this->_data['checked'][$uniqueName]['items'][] = [
+                'app'            => $app,
+                'requireVersion' => $data['version'],
+                'extensions'     => $data['parent'],
+            ];
+        };
         
-        $this->detectDependenciesStatus($extensions, $parent, $verifyInstalled);
+        while (!empty($extensions)) {
+            $ext = [];
+            $break = false; // 扩展依赖关系未满足，则终止后续检测
+            foreach ($extensions as $uniqueName => $row) {
+                $config = $configuration[$uniqueName];
+                foreach ($row['app'] as $app) {
+                    // 存在次级依赖扩展
+                    if (isset($config->getExtensionDependencies()[$app])) {
+                        $arr = $this->checkParent($config->getExtensionDependencies()[$app], array_merge($row['parent'], [$uniqueName]));
+                        $break = empty($arr);
+                        if (!$break) {
+                            $ext = array_merge($ext, $arr);
+                        }
+                    }
+                    // 次级扩展依赖关系不满足，则忽略该扩展所属的父级扩展
+                    if ($break) {
+                        foreach ($row['parent'] as $uniqueName) {
+                            unset($this->_data['checked'][$uniqueName]);
+                        }
+                    } else {
+                        $debugFunc($config, $row, $app);
+                    }
+                }
+            }
+            $extensions = $ext;
+        }
+        
+        $this->_passed = $this->sort($this->_data['checked']);
+        
+        if (!$debug) {
+            unset($this->_data['circular_tmp'], $this->_data['checked']);
+        }
         
         if (
-            !empty($this->_data['download'])
-            || !empty($this->_data['conflict'])
-            || !empty($this->_data['circular'])
-            || ($verifyInstalled && !empty($this->_data['uninstall']))
+            !empty($this->getDownload())
+            || !empty($this->getConflict())
+            || !empty($this->getCircular())
         ) {
-            $this->_info = '请先满足扩展依赖关系再执行当前操作。';
             $this->_status = false;
         } else {
             $this->_status = true;
         }
-        unset($this->_data['parent']);
         
-        return $this->_data;
+        return $this->_status;
     }
     
     /**
-     *  检测扩展依赖状态
+     * 检测父级扩展是否满足依赖关系，即是否存在【未下载、版本冲突或无限循环】等问题
      *
-     * @param array  $extensions 扩展数据
-     * @param string $parent 上级扩展名称
-     * @param bool   $verifyInstalled 是否验证扩展是否已经安装
+     * @param array $extensions
+     * @param array $parent
+     *
+     * @return array 返回满足依赖关系的扩展数组
      */
-    protected function detectDependenciesStatus(array $extensions, string $parent, bool $verifyInstalled)
+    private function checkParent(array $extensions, array $parent = []): array
     {
-        $extensions = $this->normalize($extensions);
         $configuration = $this->service->getRepository()->getFinder()->getConfiguration();
-        $localConfiguration = $this->service->getRepository()->getLocalConfiguration();
-//        if (!in_array($parent, $this->_data['parent'])) {
-//            $this->_data['parent'][] = $parent;
-//        }
-        
-        foreach ($extensions as $uniqueName => $row) {
-            $requireVersion = $row['version'];
-            $extension = $uniqueName . ':' . $requireVersion;
-            // 需要下载的扩展不检测依赖关系
-            if (in_array($extension, $this->_data['download'])) {
-                continue;
+        $total = count($extensions);
+        $rootLevel = empty($parent); // 根级别扩展
+        /**
+         * 检测扩展合法性
+         *
+         * @param Configuration $config
+         * @param array         $data
+         * @param array         $extensions
+         *
+         * @internal param string $requireVersion
+         * @internal param array $parent
+         */
+        $checker = function (Configuration $config, array $data, array &$extensions) {
+            $parent = $data['parent'];
+            $requireVersion = $data['version'];
+            $uniqueName = $config->getName();
+            // 版本不符合则提示需要解决版本冲突
+            if (!Ec::$service->getSystem()->getVersion()->compare($config->getVersion(), $requireVersion)) {
+                $this->_conflict[$uniqueName]['localVersion'] = $config->getVersion();
+                $this->_conflict[$uniqueName]['items'][] = [
+                    'extensions'     => $parent,
+                    'requireVersion' => $requireVersion,
+                ];
+                unset($extensions[$uniqueName]);
+            } // 通过版本验证
+            else {
+                // 检测扩展是否存在无限循环依赖
+                // 扩展没有被检测
+                if (!isset($this->_data['circular_tmp'][$uniqueName])) {
+                    $this->_data['circular_tmp'][$uniqueName] = false;
+                } // 已被检测的扩展是否存在无限循环依赖
+                elseif (false === $this->_data['circular_tmp'][$uniqueName]) {
+                    if (in_array($uniqueName, $parent)) {
+                        $this->_circular[$uniqueName] = array_merge($parent, [$uniqueName]);
+                        unset($extensions[$uniqueName]);
+                    }
+                }
             }
+        };
+        
+        foreach ($extensions as $uniqueName => &$row) {
+            $row['parent'] = $parent;
             // 本地存在扩展
             if (isset($configuration[$uniqueName])) {
-                $exists = $configuration[$uniqueName];
-                
-                // 指定在哪个app里安装扩展
-                if (isset($row['app'])) {
-                    $row['app'] = array_intersect($exists->getApp(), $row['app']);
-                    // 没有有效app，则默认在所有有效的app里安装扩展
-                    if (empty($row['app'])) {
-                        $row['app'] = $exists->getApp();
-                    }
-                } // 没有指定app，则默认在所有有效的app里安装扩展
-                else {
-                    $row['app'] = $exists->getApp();
+                $config = $configuration[$uniqueName];
+                $row['app'] = array_intersect($config->getApp(), $row['app']);
+                // 不存在有效app，则忽略该扩展
+                if (empty($row['app'])) {
+                    unset($extensions[$uniqueName]);
+                    continue;
                 }
-                
-                // 检查扩展依赖关系
-                foreach ($row['app'] as $app) {
-                    // 检测扩展是否需要安装
-                    if ($verifyInstalled &&
-                        !isset($this->service->getRepository()->getDbConfiguration()[$app][$uniqueName])
-                        && !in_array($uniqueName, $this->_data['uninstall'][$app] ?? [])
-                    ) {
-                        $this->_data['uninstall'][$app][] = $uniqueName;
-                    }
-                    
-                    // 扩展没有通过检测
-                    if (!isset($this->_data['passed'][$app][$uniqueName])) {
-                        // 版本不符合则提示需要解决版本冲突
-                        if (!Ec::$service->getSystem()->getVersion()->compare($exists->getVersion(), $requireVersion)) {
-                            $this->_data['conflict'][$uniqueName]['localVersion'] = $exists->getVersion();
-                            $this->_data['conflict'][$uniqueName]['requireVersion'][$parent] = $requireVersion;
-                        } // 版本一致
-                        else {
-                            $this->_data['passed'][$app][$uniqueName] = false;
-                            if (isset($exists->getExtensionDependencies()[$app])) {
-                                $this->detectDependenciesStatus($exists->getExtensionDependencies()[$app], $uniqueName, $verifyInstalled);
-                            }
-                            unset($this->_data['passed'][$app][$uniqueName]); // 确保被依赖的扩展在前
-                            if ($verifyInstalled && !in_array($uniqueName, $this->_data['uninstall'][$app] ?? [])) {
-                                /** @var ExtensionInfo $infoInstance */
-                                $infoInstance = $localConfiguration[$app][$uniqueName];
-                                $this->_data['passed'][$app][$uniqueName] = $infoInstance;
-                            }
-                        }
-                    } // 通过检测的扩展是否存在循环依赖
-                    elseif (false === $this->_data['passed'][$app][$uniqueName]) {
-                        $this->_data['circular'][$uniqueName] = $this->composeCircularDependencyTrace($uniqueName, $app);
-                    } else {
-                        // 版本不符合则提示需要解决版本冲突
-                        if (!Ec::$service->getSystem()->getVersion()->compare($exists->getVersion(), $requireVersion)) {
-                            $this->_data['conflict'][$uniqueName]['localVersion'] = $exists->getVersion();
-                            $this->_data['conflict'][$uniqueName]['requireVersion'][$parent] = $requireVersion;
-                        }
-                    }
-                }
+                $checker($config, $row, $extensions);
             } // 本地不存在扩展
             else {
-                if (!isset(Versions::VERSIONS[$uniqueName])) {
-                    $this->_data['download'][] = $extension;
-                }
+                $this->_download[$uniqueName][] = [
+                    'extensions'     => $parent,
+                    'requireVersion' => $row['version'],
+                ];
+                unset($extensions[$uniqueName]);
             }
         }
+        
+        return !$rootLevel && ($total != count($extensions))
+            // 非顶级的父级扩展所依赖的子级扩展没有解决依赖关系（冲突、不存在或无限循环），则中断该扩展的后续检测
+            ? []
+            : $extensions;
     }
     
     /**
-     * 组成扩展依赖关系内循环跟踪信息
+     * 按照底层依赖关系排序扩展，确保被依赖的扩展在前
      *
-     * @param string  $circularDependencyName 内循环扩展名称
-     * @param  string $app
+     * @param array $extensions
+     *                   ```php
+     *                   [
+     *                   'engine-core/theme-bootstrap-v3' => [
+     *                   'app' => ['backend']
+     *                   ]
+     *                   ]
+     *                   ```
+     * @param array $arr 循环中转参数
      *
-     * @return string
+     * @return array
+     * ```php
+     * [
+     *      'engine-core/config-system' => [
+     *          'app' => ['common']
+     *      ],
+     *      'engine-core/theme-bootstrap-v3' => [
+     *          'app' => ['backend']
+     *      ]
+     * ]
+     * ```
      */
-    protected function composeCircularDependencyTrace($circularDependencyName, $app): string
+    public function sort(array $extensions, $arr = []): array
     {
-        $dependencyTrace = [];
-        $startFound = false;
-        foreach ($this->_data['passed'][$app] as $uniqueName => $value) {
-            if ($uniqueName === $circularDependencyName) {
-                $startFound = true;
-            }
-            if ($startFound && $value === false) {
-                $dependencyTrace[] = $uniqueName;
+        $data = [];
+        $configuration = $this->service->getRepository()->getFinder()->getConfiguration();
+        
+        foreach ($extensions as $uniqueName => $row) {
+            $config = $configuration[$uniqueName];
+            foreach ($row['app'] as $app) {
+                // 扩展没有被检测
+                if (!isset($arr[$app][$uniqueName])) {
+                    $arr[$app][$uniqueName] = false;
+                    // 递归检测依赖关系
+                    if (isset($config->getExtensionDependencies()[$app])) {
+                        $data = array_merge($data, $this->sort($config->getExtensionDependencies()[$app], $arr));
+                    }
+                    if (!isset($data[$uniqueName]['app'])) {
+                        $data[$uniqueName]['app'][] = $app;
+                    } elseif (!in_array($app, $data[$uniqueName]['app'])) {
+                        array_push($data[$uniqueName]['app'], $app);
+                    }
+                }
             }
         }
-        $dependencyTrace[] = $circularDependencyName;
         
-        return implode(' -> ', $dependencyTrace);
+        return $data;
+    }
+    
+    /**
+     * @var array 需要下载的扩展
+     */
+    private $_download = [];
+    
+    /**
+     * 获取需要下载的扩展
+     *
+     * @return array
+     */
+    public function getDownload(): array
+    {
+        return $this->_download;
+    }
+    
+    /**
+     * @var array 存在版本冲突的扩展
+     */
+    private $_conflict = [];
+    
+    /**
+     * 获取存在版本冲突的扩展
+     *
+     * @return array
+     */
+    public function getConflict(): array
+    {
+        return $this->_conflict;
+    }
+    
+    /**
+     * @var array 无限循环依赖的扩展
+     */
+    private $_circular = [];
+    
+    /**
+     * 获取无限循环依赖的扩展
+     *
+     * @return array
+     */
+    public function getCircular(): array
+    {
+        return $this->_circular;
+    }
+    
+    /**
+     * @var array 通过依赖检测的扩展
+     */
+    private $_passed = [];
+    
+    /**
+     * 获取通过依赖检测的扩展
+     *
+     * @see validate()
+     *
+     * @return array
+     */
+    public function getPassed(): array
+    {
+        return $this->_passed;
     }
     
 }

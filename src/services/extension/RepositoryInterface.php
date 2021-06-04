@@ -5,12 +5,14 @@
  * @license BSD 3-Clause License
  */
 
+declare(strict_types=1);
+
 namespace EngineCore\services\extension;
 
 use EngineCore\extension\repository\info\ExtensionInfo;
 
 /**
- * 扩展仓库管理服务接口类，主要管理扩展的本地和数据库数据
+ * 扩展仓库管理服务接口，主要管理扩展的本地和数据库数据
  *
  * 注意：
  * {uniqueName} = {vendorName} + {extensionName}

@@ -5,10 +5,12 @@
  * @license BSD 3-Clause License
  */
 
+declare(strict_types=1);
+
 namespace EngineCore\extension\repository\configuration;
 
 /**
- * 扩展配置文件搜索器接口类
+ * 扩展配置文件搜索器接口
  *
  * @property Configuration[] $configuration
  * @property array           $aliases

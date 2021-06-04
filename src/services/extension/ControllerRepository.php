@@ -1,9 +1,11 @@
 <?php
 /**
- * @link https://github.com/e-kevin/engine-core
+ * @link      https://github.com/e-kevin/engine-core
  * @copyright Copyright (c) 2020 E-Kevin
- * @license BSD 3-Clause License
+ * @license   BSD 3-Clause License
  */
+
+declare(strict_types=1);
 
 namespace EngineCore\services\extension;
 
@@ -81,23 +83,13 @@ class ControllerRepository extends BaseCategoryRepository
                 'module_id'     => $infoInstance->getModuleId(),
                 'status'        => StatusEnum::STATUS_ON,
                 'app'           => $app,
+                'version'       => $infoInstance->getConfiguration()->getVersion(),
             ]);
         }
         
         $model->setInfoInstance($infoInstance);
         
         return $model;
-    }
-    
-    /**
-     * {@inheritdoc}
-     */
-    public function configureInfo($info, $config = [])
-    {
-        Yii::configure($info, [
-            'id'       => $config['controller_id'],
-            'moduleId' => $config['module_id'],
-        ]);
     }
     
 }

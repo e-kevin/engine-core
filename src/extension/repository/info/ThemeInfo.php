@@ -1,11 +1,16 @@
 <?php
 /**
- * @link https://github.com/e-kevin/engine-core
+ * @link      https://github.com/e-kevin/engine-core
  * @copyright Copyright (c) 2020 E-Kevin
- * @license BSD 3-Clause License
+ * @license   BSD 3-Clause License
  */
 
+declare(strict_types=1);
+
 namespace EngineCore\extension\repository\info;
+
+use EngineCore\Ec;
+use EngineCore\extension\setting\SettingProviderInterface;
 
 /**
  * 主题扩展信息类
@@ -60,6 +65,16 @@ class ThemeInfo extends ExtensionInfo
                 'themeConfig' => $this->getThemeConfig(),
             ],
         ];
+    }
+    
+    /**
+     * {@inheritdoc}
+     */
+    public function getCanUninstall(): bool
+    {
+        $defaultTheme = Ec::$service->getSystem()->getSetting()->get(SettingProviderInterface::DEFAULT_THEME);
+        
+        return parent::getCanUninstall() && $this->getUniqueName() !== $defaultTheme;
     }
     
 }

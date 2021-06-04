@@ -5,6 +5,8 @@
  * @license BSD 3-Clause License
  */
 
+declare(strict_types=1);
+
 namespace EngineCore\extension\repository\configuration;
 
 use yii\base\BaseObject;
@@ -28,7 +30,7 @@ use yii\base\BaseObject;
  * @property array              $autoloadPsr4
  * @property array              $repositories
  * @property array              $extra
- * @property array              $extraConfig
+ * @property array              $extensionConfig
  * @property array              $app
  * @property array              $extensionDependencies
  *
@@ -342,7 +344,7 @@ class Configuration extends BaseObject
      *
      * @return array
      */
-    public function getExtraConfig()
+    public function getExtensionConfig()
     {
         return $this->getExtra()[ConfigurationFinderInterface::EXTENSION_CONFIGURATION_KEY] ?? [];
     }
@@ -355,7 +357,7 @@ class Configuration extends BaseObject
     public function getApp()
     {
         if (null === $this->_app) {
-            $this->_app = (array)($this->getExtraConfig()['app'] ?? 'common');
+            $this->_app = (array)($this->getExtensionConfig()['app'] ?? 'common');
             // 如果扩展所属应用包含公共应用，则该扩展直接被视为公共扩展
             if (in_array('common', $this->_app)) {
                 $this->_app = ['common'];
@@ -374,40 +376,31 @@ class Configuration extends BaseObject
     {
         $dependencies = [];
         $composerRequire = $this->getComposerDependencies();
-        $extensionRequire = $this->getExtraConfig()['require'] ?? [];
+        $extensionRequire = $this->getExtensionConfig()['require'] ?? [];
         foreach ($extensionRequire as $app => $value) {
             // 只获取在可安装的应用列表中的依赖数据
             if (in_array($app, $this->getApp())) {
                 foreach ($value as $uniqueName => $row) {
+                    $version = $composerRequire[$uniqueName] ?? false; // composer依赖的版本优先级最高
                     // "engine-core/theme-bootstrap-v3": "*"
                     if (is_string($row)) {
-                        if (isset($composerRequire[$uniqueName])) {
-                            $row = $composerRequire[$uniqueName]; // 以composer依赖的版本为准
-                        }
                         $dependencies[$app][$uniqueName] = [
-                            'app'     => $app,
-                            'version' => $row,
+                            'app'     => [$app],
+                            'version' => $version ?: $row,
                         ];
                     } else {
-                        if (isset($composerRequire[$uniqueName])) {
-                            $row['version'] = $composerRequire[$uniqueName]; // 以composer依赖的版本为准
-                        }
                         /*
                          * "engine-core/theme-bootstrap-v3": {
                          *  "app": "backend",
                          * }
                          */
-                        if (!isset($row['version'])) {
-                            $row['version'] = '*'; // 没有指定版本，即任意版本均可
-                        }
+                        $row['version'] = $version ?: ($row['version'] ?? '*'); // 没有指定版本，即任意版本均可
                         /*
                          * "engine-core/theme-bootstrap-v3": {
                          *  "version": "*",
                          * }
                          */
-                        if (!isset($row['app'])) {
-                            $row['app'] = $app;
-                        }
+                        $row['app'] = (array)($row['app'] ?? $app);
                         $dependencies[$app][$uniqueName] = $row;
                     }
                 }

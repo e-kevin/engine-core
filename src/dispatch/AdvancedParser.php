@@ -1,8 +1,8 @@
 <?php
 /**
- * @link https://github.com/e-kevin/engine-core
+ * @link      https://github.com/e-kevin/engine-core
  * @copyright Copyright (c) 2020 E-Kevin
- * @license BSD 3-Clause License
+ * @license   BSD 3-Clause License
  */
 
 namespace EngineCore\dispatch;
@@ -26,23 +26,23 @@ class AdvancedParser extends SimpleParser
      * ['index', 'bootstrap-v3/index', 'index:home', 'bootstrap-v3/index:home']
      * ```
      * 键名-键值对配置：
-     *  - `class`: 使用该类创建调度器，该类必须继承`\EngineCore\dispatch\Dispatch`。
-     *  - `map`: 使用其他调度器进行映射，目前仅支持同一控制器下的调度器映射。
-     *  注意：当'class'被明确指定后，该配置将不生效。
-     *  - `response`: 调度响应器配置 @see \EngineCore\dispatch\DispatchResponse
+     *  - `class` string: 使用该类创建调度器，该类必须继承`\EngineCore\dispatch\Dispatch`。
+     *  - `map` string: 使用其他调度器进行映射，目前仅支持同一控制器下的调度器映射。
+     *  注意：当'class'被明确指定后，`map`配置将不生效。
+     *  - `response` array: 调度响应器配置 @see \EngineCore\dispatch\DispatchResponse
      *
      * ```php
      * [
-     *  'index' => [],
-     *  'index' => '{namespace}\{className}',
-     *  'index' => 'home',
-     *  'bootstrap-v3/index' => [],
-     *  'bootstrap-v3/index' => '{namespace}\{className}',
-     *  'bootstrap-v3/index' => 'home',
-     *  'index' => 'home:home', // 用'Home'调度器代替'Index'调度器，并用'home'视图文件渲染页面
-     *  'bootstrap-v3/index' => 'home:home', bootstrap-v3主题启用时，用'Home'调度器代替'Index'调度器，并用'home'视图文件渲染页面
-     *  'index' => ':home', // 'Index'调度器用'home'视图文件渲染页面
-     *  'bootstrap-v3/index' => ':home', bootstrap-v3主题启用时，'Index'调度器用'home'视图文件渲染页面
+     *      'index' => [],
+     *      'index' => '{namespace}\{className}',
+     *      'index' => 'home',
+     *      'bootstrap-v3/index' => [],
+     *      'bootstrap-v3/index' => '{namespace}\{className}',
+     *      'bootstrap-v3/index' => 'home',
+     *      'index' => 'home:home', // 用'Home'调度器代替'Index'调度器，并用'home'视图文件渲染页面
+     *      'bootstrap-v3/index' => 'home:home', bootstrap-v3主题启用时，用'Home'调度器代替'Index'调度器，并用'home'视图文件渲染页面
+     *      'index' => ':home', // 'Index'调度器用'home'视图文件渲染页面
+     *      'bootstrap-v3/index' => ':home', bootstrap-v3主题启用时，'Index'调度器用'home'视图文件渲染页面
      * ]
      * ```
      *
@@ -70,20 +70,20 @@ class AdvancedParser extends SimpleParser
     {
         $arr = [];
         // 解析多主题配置
-        if ($this->dm->getThemeRule()->isEnableTheme() && strpos($config, '/') !== false) {
+        if ($this->dm->getTheme()->isEnableTheme() && strpos($config, '/') !== false) {
             list($themeName, $dispatchId) = explode('/', $config);
             if (strpos($dispatchId, ':') !== false) {
                 /**
                  * 'bootstrap-v3/index:home'
                  * 转换为
                  * [
-                 *  '@bootstrap-v3' => [
-                 *      'index' => [
-                 *          'response' => [
-                 *              'viewFile' => 'home',
+                 *      '@bootstrap-v3' => [
+                 *          'index' => [
+                 *              'response' => [
+                 *                  'viewFile' => 'home',
+                 *              ],
                  *          ],
                  *      ],
-                 *  ],
                  * ]
                  */
                 $arr['@' . $themeName] = $this->normalizeStringConfigWithColon($dispatchId);
@@ -92,9 +92,9 @@ class AdvancedParser extends SimpleParser
                  * 'bootstrap-v3/index'
                  * 转换为
                  * [
-                 *  '@bootstrap-v3' => [
-                 *      'index' => [],
-                 *  ],
+                 *      '@bootstrap-v3' => [
+                 *          'index' => [],
+                 *      ],
                  * ]
                  */
                 $arr['@' . $themeName][$dispatchId] = [];
@@ -105,11 +105,11 @@ class AdvancedParser extends SimpleParser
                  * 'index:home'
                  * 转换为
                  * [
-                 *  'index' => [
-                 *      ’response' => [
-                 *          'viewFile' => 'home',
+                 *      'index' => [
+                 *          'response' => [
+                 *              'viewFile' => 'home',
+                 *          ],
                  *      ],
-                 *  ],
                  * ]
                  */
                 $arr = $this->normalizeStringConfigWithColon($config);
@@ -118,7 +118,7 @@ class AdvancedParser extends SimpleParser
                  * 'index'
                  * 转换为
                  * [
-                 *  'index' => [],
+                 *      'index' => [],
                  * ]
                  */
                 $arr[$config] = [];
@@ -135,11 +135,11 @@ class AdvancedParser extends SimpleParser
      * ['index:home']
      * // 转换为
      * [
-     *  'index' => [
-     *      'response' => [
-     *          'viewFile' => 'home',
+     *      'index' => [
+     *          'response' => [
+     *              'viewFile' => 'home',
+     *          ],
      *      ],
-     *  ],
      * ]
      * ```
      *
@@ -165,16 +165,16 @@ class AdvancedParser extends SimpleParser
      *
      * ```php
      * [
-     *  'index' => [],
-     *  'index' => '{namespace}\{className}',
-     *  'index' => 'home',
-     *  'bootstrap-v3/index' => [],
-     *  'bootstrap-v3/index' => '{namespace}\{className}',
-     *  'bootstrap-v3/index' => 'home',
-     *  'index' => 'home:home', // 用'Home'调度器代替'Index'调度器，并用'home'视图文件渲染页面
-     *  'bootstrap-v3/index' => 'home:home', bootstrap-v3主题启用时，用'Home'调度器代替'Index'调度器，并用'home'视图文件渲染页面
-     *  'index' => ':home', // 'Index'调度器用'home'视图文件渲染页面
-     *  'bootstrap-v3/index' => ':home', bootstrap-v3主题启用时，'Index'调度器用'home'视图文件渲染页面
+     *      'index' => [],
+     *      'index' => '{namespace}\{className}',
+     *      'index' => 'home',
+     *      'bootstrap-v3/index' => [],
+     *      'bootstrap-v3/index' => '{namespace}\{className}',
+     *      'bootstrap-v3/index' => 'home',
+     *      'index' => 'home:home', // 用'Home'调度器代替'Index'调度器，并用'home'视图文件渲染页面
+     *      'bootstrap-v3/index' => 'home:home', bootstrap-v3主题启用时，用'Home'调度器代替'Index'调度器，并用'home'视图文件渲染页面
+     *      'index' => ':home', // 'Index'调度器用'home'视图文件渲染页面
+     *      'bootstrap-v3/index' => ':home', bootstrap-v3主题启用时，'Index'调度器用'home'视图文件渲染页面
      * ]
      * ```
      *
@@ -187,16 +187,16 @@ class AdvancedParser extends SimpleParser
     {
         $arr = [];
         // 解析多主题配置
-        if ($this->dm->getThemeRule()->isEnableTheme() && strpos($key, '/') !== false) {
+        if ($this->dm->getTheme()->isEnableTheme() && strpos($key, '/') !== false) {
             list($themeName, $dispatchId) = explode('/', $key);
             if (is_array($value)) {
                 /**
                  * 'bootstrap-v3/index' => []
                  * 转换为
                  * [
-                 *  '@bootstrap-v3' => [
-                 *      'index' => [],
-                 *  ],
+                 *      '@bootstrap-v3' => [
+                 *          'index' => [],
+                 *      ],
                  * ]
                  */
                 $arr['@' . $themeName][$dispatchId] = $value;
@@ -205,11 +205,11 @@ class AdvancedParser extends SimpleParser
                  * 'bootstrap-v3/index' => '{namespace}\{className}'
                  * 转换为
                  * [
-                 *  '@bootstrap-v3' => [
-                 *      'index' => [
-                 *          'class' => '{namespace}\{className}',
+                 *      '@bootstrap-v3' => [
+                 *          'index' => [
+                 *              'class' => '{namespace}\{className}',
+                 *          ],
                  *      ],
-                 *  ],
                  * ]
                  */
                 $arr['@' . $themeName][$dispatchId]['class'] = $value;
@@ -219,14 +219,14 @@ class AdvancedParser extends SimpleParser
                      * 'bootstrap-v3/index' => 'home:home'
                      * 转换为
                      * [
-                     *  '@bootstrap-v3' => [
-                     *      'index' => [
-                     *          'map' => 'home',
-                     *          'response' => [
-                     *              'viewFile' => 'home',
+                     *      '@bootstrap-v3' => [
+                     *          'index' => [
+                     *              'map' => 'home',
+                     *              'response' => [
+                     *                  'viewFile' => 'home',
+                     *              ],
                      *          ],
                      *      ],
-                     *  ],
                      * ]
                      */
                     $arr['@' . $themeName] = $this->normalizeStringConfigWithColonForMap($dispatchId, $value);
@@ -235,17 +235,17 @@ class AdvancedParser extends SimpleParser
                      * 'bootstrap-v3/index' => 'home'
                      * 转换为
                      * [
-                     *  '@bootstrap-v3' => [
-                     *      'index' => [
-                     *          'map' => 'home',
+                     *      '@bootstrap-v3' => [
+                     *          'index' => [
+                     *              'map' => 'home',
+                     *          ],
                      *      ],
-                     *  ],
                      * ]
                      */
                     $arr['@' . $themeName][$key]['map'] = $value;
                 }
             } else {
-                $this->normalizeOtherValueConfig($key, $value);
+                $this->normalizeOtherValueConfig($arr, $key, $value);
             }
         } else {
             if (is_array($value)) {
@@ -253,7 +253,7 @@ class AdvancedParser extends SimpleParser
                  * 'index' => []
                  * 转换为
                  * [
-                 *  'index' => [],
+                 *      'index' => [],
                  * ]
                  */
                 $arr[$key] = $value;
@@ -262,9 +262,9 @@ class AdvancedParser extends SimpleParser
                  * 'index' => '{namespace}\{className}'
                  * 转换为
                  * [
-                 *  'index' => [
-                 *      'class' => '{namespace}\{className}',
-                 *  ],
+                 *      'index' => [
+                 *          'class' => '{namespace}\{className}',
+                 *      ],
                  * ]
                  */
                 $arr[$key]['class'] = $value;
@@ -274,12 +274,12 @@ class AdvancedParser extends SimpleParser
                      * 'index' => 'home:home'
                      * 转换为
                      * [
-                     *  'index' => [
-                     *      'map' => 'home',
-                     *      'response' => [
-                     *          'viewFile' => 'home',
+                     *      'index' => [
+                     *          'map' => 'home',
+                     *          'response' => [
+                     *              'viewFile' => 'home',
+                     *          ],
                      *      ],
-                     *  ],
                      * ]
                      */
                     $arr = $this->normalizeStringConfigWithColonForMap($key, $value);
@@ -287,15 +287,15 @@ class AdvancedParser extends SimpleParser
                     /**
                      * 'index' => 'home'
                      * [
-                     *  'index' => [
-                     *      'map' => 'home',
-                     *  ],
+                     *      'index' => [
+                     *          'map' => 'home',
+                     *      ],
                      * ]
                      */
                     $arr[$key]['map'] = $value;
                 }
             } else {
-                $this->normalizeOtherValueConfig($key, $value);
+                $this->normalizeOtherValueConfig($arr, $key, $value);
             }
         }
         
