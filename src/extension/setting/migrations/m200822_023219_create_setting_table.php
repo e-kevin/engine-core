@@ -86,6 +86,7 @@ class m200822_023219_create_setting_table extends Migration
             foreach ($row as $field => $value) {
                 // 只转存默认字段的数值
                 if (in_array($field, $fields)) {
+                    // 只储存和扩展设置不一样的数据
                     if (isset($settings[$key][$field])) {
                         if ($settings[$key][$field] != $value) {
                             $arr[$field] = $value;

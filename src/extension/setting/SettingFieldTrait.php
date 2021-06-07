@@ -16,21 +16,23 @@ namespace EngineCore\extension\setting;
  */
 trait SettingFieldTrait
 {
-    
+
     /**
      * @var array 配置键名与方法名之间的映射关系
      *            数组的键名值是系统设置数据提供器默认支持的属性，同时也是系统设置数据库表默认需要包含的字段
      */
     private $_mapField = [
-        'name'        => 'getNameField',
-        'value'       => 'getValueField',
-        'extra'       => 'getExtraField',
-        'title'       => 'getTitleField',
+        'name' => 'getNameField',
+        'value' => 'getValueField',
+        'extra' => 'getExtraField',
+        'title' => 'getTitleField',
         'description' => 'getDescriptionField',
-        'type'        => 'getTypeField',
-        'category'    => 'getCategoryField',
+        'type' => 'getTypeField',
+        'category' => 'getCategoryField',
     ];
-    
+
+    private $_map;
+
     /**
      * 获取配置键名与方法名之间的映射关系
      *
@@ -40,20 +42,21 @@ trait SettingFieldTrait
      */
     public function getFieldMap(): array
     {
-        $map = [];
-        foreach ($this->_mapField as $field => $method) {
-            $map[$field] = $this->$method();
+        if (null === $this->_map) {
+            foreach ($this->_mapField as $field => $method) {
+                $this->_map[$field] = $this->$method();
+            }
+            $this->_map['id'] = 'id';
         }
-        $map['id'] = 'id';
-        
-        return $map;
+
+        return $this->_map;
     }
-    
+
     /**
      * @var string 设置键名的数据库字段名
      */
     private $_nameField = 'name';
-    
+
     /**
      * 获取设置键名的数据库字段名
      *
@@ -65,7 +68,7 @@ trait SettingFieldTrait
     {
         return $this->_nameField;
     }
-    
+
     /**
      * 设置设置键名的数据库字段名
      *
@@ -77,12 +80,12 @@ trait SettingFieldTrait
     {
         $this->_nameField = $field;
     }
-    
+
     /**
      * @var string 设置值的数据库字段名
      */
     private $_valueField = 'value';
-    
+
     /**
      * 获取设置值的数据库字段名
      *
@@ -94,7 +97,7 @@ trait SettingFieldTrait
     {
         return $this->_valueField;
     }
-    
+
     /**
      * 设置设置值的数据库字段名
      *
@@ -106,12 +109,12 @@ trait SettingFieldTrait
     {
         $this->_valueField = $field;
     }
-    
+
     /**
      * @var string 设置额外数据的数据库字段名
      */
     private $_extraField = 'extra';
-    
+
     /**
      * 获取设置额外数据的数据库字段名
      *
@@ -123,7 +126,7 @@ trait SettingFieldTrait
     {
         return $this->_extraField;
     }
-    
+
     /**
      * 设置设置额外数据的数据库字段名
      *
@@ -135,12 +138,12 @@ trait SettingFieldTrait
     {
         $this->_extraField = $field;
     }
-    
+
     /**
      * @var string 设置标题的数据库字段名
      */
     private $_titleField = 'title';
-    
+
     /**
      * 获取设置标题的数据库字段名
      * @see SettingFieldInterface::getTitleField()
@@ -152,7 +155,7 @@ trait SettingFieldTrait
     {
         return $this->_titleField;
     }
-    
+
     /**
      * 设置设置标题的数据库字段名
      *
@@ -164,12 +167,12 @@ trait SettingFieldTrait
     {
         $this->_titleField = $field;
     }
-    
+
     /**
      * @var string 设置描述的数据库字段名
      */
     private $_descriptionField = 'description';
-    
+
     /**
      * 获取设置描述的数据库字段名
      *
@@ -181,7 +184,7 @@ trait SettingFieldTrait
     {
         return $this->_descriptionField;
     }
-    
+
     /**
      * 设置设置描述的数据库字段名
      *
@@ -193,12 +196,12 @@ trait SettingFieldTrait
     {
         $this->_descriptionField = $field;
     }
-    
+
     /**
      * @var string 设置类型的数据库字段名
      */
     private $_typeField = 'type';
-    
+
     /**
      * 获取设置类型的数据库字段名
      *
@@ -210,7 +213,7 @@ trait SettingFieldTrait
     {
         return $this->_typeField;
     }
-    
+
     /**
      * 设置设置类型的数据库字段名
      *
@@ -222,12 +225,12 @@ trait SettingFieldTrait
     {
         $this->_typeField = $field;
     }
-    
+
     /**
      * @var string 设置分组的数据库字段名
      */
     private $_categoryField = 'category';
-    
+
     /**
      * 获取设置分组的数据库字段名
      *
@@ -239,7 +242,7 @@ trait SettingFieldTrait
     {
         return $this->_categoryField;
     }
-    
+
     /**
      * 设置设置分组的数据库字段名
      *
@@ -251,5 +254,5 @@ trait SettingFieldTrait
     {
         $this->_categoryField = $field;
     }
-    
+
 }

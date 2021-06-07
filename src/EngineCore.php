@@ -14,7 +14,7 @@ use EngineCore\{
 };
 use Yii;
 use yii\{
-    base\BaseObject, base\InvalidConfigException, helpers\VarDumper
+    base\BaseObject, base\InvalidConfigException, helpers\VarDumper, web\Application
 };
 
 /**
@@ -80,11 +80,14 @@ class EngineCore extends BaseObject
     public static function dump($arr, $getCalledClass = null, $echo = true, $label = null, $strict = true)
     {
         if (YII_DEBUG && $getCalledClass) {
-            echo '<pre>================ START: ' . $getCalledClass . ' ================</pre>';
+            echo '================ START: ' . $getCalledClass . ' ================';
         }
         ArrayHelper::dump($arr, $echo, $label, $strict);
         if (YII_DEBUG && $getCalledClass) {
-            echo '<pre>================ END: ' . $getCalledClass . ' ================</pre>';
+            echo '================ END: ' . $getCalledClass . ' ================';
+            if (Yii::$app instanceof Application) {
+                echo "<br/>";
+            }
         }
     }
     

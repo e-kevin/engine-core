@@ -106,7 +106,7 @@ abstract class BaseExtensionEntity extends BaseObject implements ExtensionEntity
         if (empty($config)) {
             return;
         }
-        
+
         // 合并不同应用的配置数据
         $arr = [];
         foreach ($config as $app => $row) {
@@ -115,7 +115,7 @@ abstract class BaseExtensionEntity extends BaseObject implements ExtensionEntity
         
         $isController = $this->object instanceOf Controller;
         $isModule = $this->object instanceOf Module;
-        
+
         foreach ($arr as $type => $config) {
             if ('params' === $type) {
                 Yii::$app->params = ArrayHelper::merge($config, Yii::$app->params);

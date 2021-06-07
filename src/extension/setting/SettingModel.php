@@ -24,9 +24,9 @@ use Yii;
  */
 class SettingModel extends ActiveRecord implements SettingProviderInterface
 {
-    
+
     use SettingProviderTrait;
-    
+
     /**
      * {@inheritdoc}
      */
@@ -34,7 +34,7 @@ class SettingModel extends ActiveRecord implements SettingProviderInterface
     {
         return '{{%viMJHk_setting}}';
     }
-    
+
     /**
      * {@inheritdoc}
      */
@@ -42,65 +42,65 @@ class SettingModel extends ActiveRecord implements SettingProviderInterface
     {
         return [
             // name rules
-            'nameRequired'      => [$this->getNameField(), 'required'],
-            'nameLength'        => [$this->getNameField(), 'string', 'max' => 30],
-            'nameUnique'        => [$this->getNameField(), 'unique'],
+            'nameRequired' => [$this->getNameField(), 'required'],
+            'nameLength' => [$this->getNameField(), 'string', 'max' => 30],
+            'nameUnique' => [$this->getNameField(), 'unique'],
             // title rules
-            'titleRequired'     => [$this->getTitleField(), 'required'],
-            'titleLength'       => [$this->getTitleField(), 'string', 'max' => 20],
+            'titleRequired' => [$this->getTitleField(), 'required'],
+            'titleLength' => [$this->getTitleField(), 'string', 'max' => 20],
             // extra rules
-            'extraLength'       => [$this->getExtraField(), 'string', 'max' => 255],
+            'extraLength' => [$this->getExtraField(), 'string', 'max' => 255],
             // description rules
             'descriptionLength' => [$this->getDescriptionField(), 'string', 'max' => 255],
             // other rules
-            'otherString'       => [$this->getValueField(), 'string'],
-            'otherInteger'      => [[$this->getTypeField(), $this->getCategoryField()], 'integer'],
+            'otherString' => [$this->getValueField(), 'string'],
+            'otherInteger' => [[$this->getTypeField(), $this->getCategoryField()], 'integer'],
         ];
     }
-    
+
     /**
      * {@inheritdoc}
      */
     public function attributeLabels()
     {
         return [
-            'id'                         => 'ID',
-            $this->getNameField()        => Yii::t('ec/setting', 'Name'),
-            $this->getTitleField()       => Yii::t('ec/setting', 'Title'),
-            $this->getExtraField()       => Yii::t('ec/setting', 'Extra'),
+            'id' => 'ID',
+            $this->getNameField() => Yii::t('ec/setting', 'Name'),
+            $this->getTitleField() => Yii::t('ec/setting', 'Title'),
+            $this->getExtraField() => Yii::t('ec/setting', 'Extra'),
             $this->getDescriptionField() => Yii::t('ec/setting', 'Description'),
-            $this->getValueField()       => Yii::t('ec/setting', 'Value'),
-            $this->getTypeField()        => Yii::t('ec/setting', 'Type'),
-            $this->getCategoryField()    => Yii::t('ec/setting', 'Category'),
+            $this->getValueField() => Yii::t('ec/setting', 'Value'),
+            $this->getTypeField() => Yii::t('ec/setting', 'Type'),
+            $this->getCategoryField() => Yii::t('ec/setting', 'Category'),
         ];
     }
-    
+
     /**
      * {@inheritdoc}
      */
     public function attributeHints()
     {
         return [
-            $this->getNameField()        => Yii::t('ec/setting', 'Only English can be used and cannot be repeated.'),
-            $this->getTitleField()       => Yii::t('ec/setting', 'Configuration Title for Background Display.'),
-            $this->getValueField()       => Yii::t('ec/setting', 'Value'),
+            $this->getNameField() => Yii::t('ec/setting', 'Only English can be used and cannot be repeated.'),
+            $this->getTitleField() => Yii::t('ec/setting', 'Configuration Title for Background Display.'),
+            $this->getValueField() => Yii::t('ec/setting', 'Value'),
             $this->getDescriptionField() => Yii::t('ec/setting', 'Configuration details.'),
-            $this->getExtraField()       => Yii::t('ec/setting', 'This item needs to be configured for the type of select, radio and checkbox.'),
-            $this->getTypeField()        => Yii::t('ec/setting', 'The system will analyze the configuration data according to different types.'),
-            $this->getCategoryField()    => Yii::t('ec/setting', 'Settings without grouping will not appear in system settings.'),
+            $this->getExtraField() => Yii::t('ec/setting', 'This item needs to be configured for the type of select, radio and checkbox.'),
+            $this->getTypeField() => Yii::t('ec/setting', 'The system will analyze the configuration data according to different types.'),
+            $this->getCategoryField() => Yii::t('ec/setting', 'Settings without grouping will not appear in system settings.'),
         ];
     }
-    
+
     /**
      * @inheritdoc
      */
     public function getAll(): array
     {
         return Ec::$service->getSystem()->getCache()->getOrSet(self::SETTING_KEY, function () {
-            return self::find()->select($this->getFieldMap())->indexBy($this->getNameField())->asArray()->all();
+            return self::find()->select($this->getFieldMap())->indexBy('name')->asArray()->all();
         }, $this->getCacheDuration());
     }
-    
+
     /**
      * @inheritdoc
      */
@@ -108,5 +108,5 @@ class SettingModel extends ActiveRecord implements SettingProviderInterface
     {
         Ec::$service->getSystem()->getCache()->getComponent()->delete(self::SETTING_KEY);
     }
-    
+
 }

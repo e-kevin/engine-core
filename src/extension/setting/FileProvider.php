@@ -40,7 +40,7 @@ class FileProvider extends BaseObject implements SettingProviderInterface
                 Yii::$app->params[self::SETTING_KEY] ?? []
             );
         }
-        
+
         return $this->_all;
     }
     

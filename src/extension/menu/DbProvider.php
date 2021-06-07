@@ -28,43 +28,43 @@ use yii\di\Instance;
  */
 class DbProvider extends BaseObject implements MenuProviderInterface
 {
-    
+
     use MenuProviderTrait;
-    
+
     /**
      * @var string 菜单数据库表名
      */
     public $tableName = '{{%' . ExtensionInfo::EXT_RAND_CODE . 'menu}}';
-    
+
     /**
      * @var Connection|string|array 数据库组件配置
      */
     public $db = 'db';
-    
+
     /**
      * @var string|array|ExpressionInterface
      * @see QueryInterface::where()
      */
     public $condition;
-    
+
     /**
      * @var array
      */
     public $params = [];
-    
+
     /**
      * {@inheritdoc}
      */
     public function init()
     {
         parent::init();
-        
+
         if (null === $this->tableName) {
             throw new InvalidConfigException(get_called_class() . ': The `$tableName` property must be set.');
         }
         $this->db = Instance::ensure($this->db, Connection::class);
     }
-    
+
     /**
      * {@inheritdoc}
      */
@@ -75,7 +75,9 @@ class DbProvider extends BaseObject implements MenuProviderInterface
             if (null !== $this->condition) {
                 $query->where($this->condition, $this->params);
             }
-            $list = $query->select($this->getFieldMap())->from($this->tableName)->indexBy('id')->orderBy('order')->all($this->db);
+            $list = $query->select($this->getFieldMap())
+                ->from($this->tableName)->indexBy('id')
+                ->orderBy('order')->all($this->db);
             // 获取菜单层级数
             $getLevel = function ($list, $hasParent) {
                 $level = 1;
@@ -83,7 +85,7 @@ class DbProvider extends BaseObject implements MenuProviderInterface
                     $hasParent = isset($list[$hasParent]) ? $list[$hasParent]['parent_id'] : false;
                     $level++;
                 }
-                
+
                 return $level;
             };
             // 特定参数处理
@@ -105,12 +107,12 @@ class DbProvider extends BaseObject implements MenuProviderInterface
                 }
                 $row['level'] = $getLevel($list, $row['parent_id']);
             }
-            
+
             return $list;
-            
+
         }, $this->getCacheDuration());
     }
-    
+
     /**
      * {@inheritdoc}
      */
@@ -118,5 +120,5 @@ class DbProvider extends BaseObject implements MenuProviderInterface
     {
         Ec::$service->getSystem()->getCache()->getComponent()->delete(self::MENU_KEY);
     }
-    
+
 }

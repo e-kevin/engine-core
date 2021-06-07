@@ -13,7 +13,6 @@ use yii\di\Instance;
 /**
  * Class Migration trait
  *
- * 必须先确保存在`$db`数据库连接组件属性
  *
  * @property Connection $db
  *
@@ -27,7 +26,6 @@ trait MigrationTrait
      */
     protected function truncateDatabase()
     {
-        $this->db = Instance::ensure($this->db, Connection::class);;
         $schemas = $this->db->schema->getTableSchemas();
         
         // First drop all foreign keys,

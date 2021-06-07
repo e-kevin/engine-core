@@ -78,7 +78,6 @@ class Environment extends Service
     {
         // 配置数据
         $configuration = array_merge(array_fill_keys(array_keys(AppEnum::list()), []), $this->generateConfig());
-        
         $files = [];
         $hasModel = $this->service->getRepository()->hasModel(); // 是否已经配置扩展仓库模型类
         foreach ($this->getConfigFileList() as $category => $file) {
@@ -280,21 +279,21 @@ class Environment extends Service
                     }
                 }
             }
-            // 菜单数据
-            $configuration['menu'] = ArrayHelper::merge(
-                Ec::$service->getMenu()->getConfig()->getProvider()->getDefaultConfig(),
-                $configuration['menu'] ?? []
-            );
-            // 系统设置数据
-            $configuration['setting'] = ArrayHelper::merge(
-                Ec::$service->getSystem()->getSetting()->getProvider()->getDefaultConfig(),
-                $configuration['setting'] ?? []
-            );
-            // 扩展配置文件所需的配置数据
-            $configuration['extension'] = [
-                'aliases' => $this->service->getRepository()->getFinder()->getAliases(),
-            ];
         }
+        // 菜单数据
+        $configuration['menu'] = ArrayHelper::merge(
+            Ec::$service->getMenu()->getConfig()->getProvider()->getDefaultConfig(),
+            $configuration['menu'] ?? []
+        );
+        // 系统设置数据
+        $configuration['setting'] = ArrayHelper::merge(
+            Ec::$service->getSystem()->getSetting()->getProvider()->getDefaultConfig(),
+            $configuration['setting'] ?? []
+        );
+        // 扩展配置文件所需的配置数据
+        $configuration['extension'] = [
+            'aliases' => $this->service->getRepository()->getFinder()->getAliases(),
+        ];
         
         return $configuration;
     }

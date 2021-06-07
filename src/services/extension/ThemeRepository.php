@@ -141,10 +141,10 @@ class ThemeRepository extends BaseCategoryRepository
                 $this->_config[$app] = Yii::$app->params['themeConfig'];
             } else {
                 $activeTheme = $this->hasModel() ? $this->getActiveTheme($app, false) : null;
-                $this->_config[$app] = $activeTheme ? $activeTheme->getThemeConfig() : $this->getDefaultConfig($key, $app);
+                $this->_config[$app] = $activeTheme ? $activeTheme->getThemeConfig() : $this->getDefaultConfig(null, $app);
             }
         }
-        
+
         return $key ? ($this->_config[$app][$key] ?? null) : $this->_config[$app];
     }
     
