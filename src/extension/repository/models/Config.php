@@ -1,8 +1,8 @@
 <?php
 /**
- * @link      https://github.com/e-kevin/engine-core
+ * @link https://github.com/e-kevin/engine-core
  * @copyright Copyright (c) 2021 E-Kevin
- * @license   BSD 3-Clause License
+ * @license BSD 3-Clause License
  */
 
 declare(strict_types=1);
@@ -18,12 +18,12 @@ use EngineCore\Ec;
  */
 class Config extends BaseExtensionModel implements ConfigModelInterface
 {
-    
+
     public static function tableName()
     {
         return '{{%viMJHk_config}}';
     }
-    
+
     public function rules()
     {
         return array_merge(parent::rules(), [
@@ -34,18 +34,14 @@ class Config extends BaseExtensionModel implements ConfigModelInterface
             ],
         ]);
     }
-    
+
     /**
      * {@inheritdoc}
      */
     public function afterSave($insert, $changedAttributes)
     {
-        if ($insert) {
-            // 调用扩展内置安装方法
-            $this->getInfoInstance()->install();
-        }
         parent::afterSave($insert, $changedAttributes);
-        
+
         if ($insert || isset($changedAttributes['status'])) {
             // 清理缓存
             Ec::$service->getExtension()->getRepository()->clearCache();
@@ -55,5 +51,5 @@ class Config extends BaseExtensionModel implements ConfigModelInterface
             Ec::$service->getExtension()->getEnvironment()->flushConfigFiles();
         }
     }
-    
+
 }

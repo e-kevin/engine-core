@@ -1,8 +1,8 @@
 <?php
 /**
- * @link      https://github.com/e-kevin/engine-core
- * @copyright Copyright (c) 2020 E-Kevin
- * @license   BSD 3-Clause License
+ * @link https://github.com/e-kevin/engine-core
+ * @copyright Copyright (c) 2021 E-Kevin
+ * @license BSD 3-Clause License
  */
 
 declare(strict_types=1);
@@ -86,7 +86,7 @@ class DbProvider extends BaseObject implements SettingProviderInterface
                 $query->orderBy($this->orderBy);
             }
 
-            return $query->select($this->getFieldMap())->from($this->tableName)->indexBy('name')->all($this->db);
+            return $query->select($this->getDefaultFields())->from($this->tableName)->indexBy('name')->all($this->db);
         }, $this->getCacheDuration());
     }
 

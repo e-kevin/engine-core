@@ -1,7 +1,7 @@
 <?php
 /**
  * @link https://github.com/e-kevin/engine-core
- * @copyright Copyright (c) 2020 E-Kevin
+ * @copyright Copyright (c) 2021 E-Kevin
  * @license BSD 3-Clause License
  */
 

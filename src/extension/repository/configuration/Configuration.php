@@ -1,7 +1,7 @@
 <?php
 /**
  * @link https://github.com/e-kevin/engine-core
- * @copyright Copyright (c) 2020 E-Kevin
+ * @copyright Copyright (c) 2021 E-Kevin
  * @license BSD 3-Clause License
  */
 
@@ -382,7 +382,7 @@ class Configuration extends BaseObject
             if (in_array($app, $this->getApp())) {
                 foreach ($value as $uniqueName => $row) {
                     $version = $composerRequire[$uniqueName] ?? false; // composer依赖的版本优先级最高
-                    // "engine-core/theme-bootstrap-v3": "*"
+                    // "engine-core/theme-basic": "*"
                     if (is_string($row)) {
                         $dependencies[$app][$uniqueName] = [
                             'app'     => [$app],
@@ -390,13 +390,13 @@ class Configuration extends BaseObject
                         ];
                     } else {
                         /*
-                         * "engine-core/theme-bootstrap-v3": {
+                         * "engine-core/theme-basic": {
                          *  "app": "backend",
                          * }
                          */
                         $row['version'] = $version ?: ($row['version'] ?? '*'); // 没有指定版本，即任意版本均可
                         /*
-                         * "engine-core/theme-bootstrap-v3": {
+                         * "engine-core/theme-basic": {
                          *  "version": "*",
                          * }
                          */

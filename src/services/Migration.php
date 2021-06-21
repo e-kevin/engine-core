@@ -1,8 +1,8 @@
 <?php
 /**
- * @link      https://github.com/e-kevin/engine-core
+ * @link https://github.com/e-kevin/engine-core
  * @copyright Copyright (c) 2021 E-Kevin
- * @license   BSD 3-Clause License
+ * @license BSD 3-Clause License
  */
 
 declare(strict_types=1);
@@ -133,6 +133,10 @@ class Migration extends Service
      */
     public function up($limit = 0): bool
     {
+        /**
+         * fixme 获取到异常时会输出内容，修正为根据不用应用是否显示输出内容
+         * @see \yii\db\Migration::printException()
+         */
         return $this->getMigrate()->up($limit) === ExitCode::OK ? true : false;
     }
     

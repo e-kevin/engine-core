@@ -1,8 +1,8 @@
 <?php
 /**
- * @link      https://github.com/e-kevin/engine-core
- * @copyright Copyright (c) 2020 E-Kevin
- * @license   BSD 3-Clause License
+ * @link https://github.com/e-kevin/engine-core
+ * @copyright Copyright (c) 2021 E-Kevin
+ * @license BSD 3-Clause License
  */
 
 namespace EngineCore\services\extension;
@@ -26,20 +26,20 @@ use yii\base\InvalidConfigException;
  * 扩展仓库管理服务类，主要管理所有扩展分类的本地和数据库数据
  *
  * @property ConfigurationFinderInterface $finder
- * @property array                        $localConfiguration
- * @property array                        $dbConfiguration
- * @property array                        $installed
+ * @property array $localConfiguration
+ * @property array $dbConfiguration
+ * @property array $installed
  *
  * @author E-Kevin <e-kevin@qq.com>
  */
 class Repository extends Service implements RepositoryInterface
 {
-    
+
     /**
      * @var Extension 父级服务类
      */
     public $service;
-    
+
     /**
      * 删除所有【扩展仓库、扩展配置】的缓存数据
      */
@@ -55,9 +55,9 @@ class Repository extends Service implements RepositoryInterface
         $this->service->getConfigRepository()->clearCache();
         $this->_localConfiguration = $this->_dbConfiguration = $this->_configurationByApp = $this->_listGroupByCategory = null;
     }
-    
+
     private $_localConfiguration;
-    
+
     /**
      * {@inheritdoc}
      */
@@ -83,13 +83,13 @@ class Repository extends Service implements RepositoryInterface
                                 switch (true) {
                                     case is_subclass_of($infoInstance, ControllerInfo::class):
                                         $data = [
-                                            'id'       => $config['controller_id'],
+                                            'id' => $config['controller_id'],
                                             'moduleId' => $config['module_id'],
                                         ];
                                         break;
                                     case is_subclass_of($infoInstance, ModularityInfo::class):
                                         $data = [
-                                            'id'        => $config['module_id'],
+                                            'id' => $config['module_id'],
                                             'bootstrap' => $config['bootstrap'],
                                         ];
                                         break;
@@ -106,16 +106,16 @@ class Repository extends Service implements RepositoryInterface
                             $arr[$app][$uniqueName] = $infoInstance;
                         }
                     }
-                    
+
                     return $arr;
                 }, $this->getCacheDuration());
         }
-        
+
         return $this->_localConfiguration;
     }
-    
+
     private $_dbConfiguration;
-    
+
     /**
      * {@inheritdoc}
      */
@@ -133,10 +133,10 @@ class Repository extends Service implements RepositoryInterface
                 $this->service->getConfigRepository()->getDbConfiguration()
             );
         }
-        
+
         return $this->_dbConfiguration;
     }
-    
+
     /**
      * {@inheritdoc}
      */
@@ -153,7 +153,7 @@ class Repository extends Service implements RepositoryInterface
             $this->service->getConfigRepository()->getInstalledConfiguration()
         );
     }
-    
+
     /**
      * 获取已安装扩展的信息类数据，并按底层依赖关系排序
      *
@@ -179,7 +179,7 @@ class Repository extends Service implements RepositoryInterface
         if (empty($data)) {
             return [];
         }
-        
+
         $localConfiguration = $this->getLocalConfiguration(); // 本地所有扩展的配置数据
         $arr = [];
         $index = ArrayHelper::index($data, 'unique_name', 'app');
@@ -216,12 +216,12 @@ class Repository extends Service implements RepositoryInterface
                 $arr[$uniqueName][] = $app;
             }
         }
-        
+
         return $arr;
     }
-    
+
     private $_configurationByApp;
-    
+
     /**
      * {@inheritdoc}
      * todo 改用ArrayHelper::filter()?
@@ -241,12 +241,12 @@ class Repository extends Service implements RepositoryInterface
                 $this->service->getConfigRepository()->getConfigurationByApp($installed, $app)
             );
         }
-        
+
         return $this->_configurationByApp[$installed][$app];
     }
-    
+
     private $_finder;
-    
+
     /**
      * 获取扩展配置文件搜索器
      *
@@ -258,10 +258,10 @@ class Repository extends Service implements RepositoryInterface
         if (null === $this->_finder) {
             throw new InvalidConfigException('The `finder` property must be set.');
         }
-        
+
         return $this->_finder;
     }
-    
+
     /**
      * 设置扩展配置文件搜索器
      *
@@ -271,7 +271,7 @@ class Repository extends Service implements RepositoryInterface
     {
         $this->_finder = Ec::createObject($finder, [], ConfigurationFinderInterface::class);
     }
-    
+
     /**
      * 获取指定扩展的信息类
      *
@@ -298,15 +298,15 @@ class Repository extends Service implements RepositoryInterface
         } catch (\Exception $e) {
             $infoInstance = null;
         }
-        
+
         return $infoInstance;
     }
-    
+
     /**
      * 获取指定扩展的配置文件的配置数据
      *
      * @param string $uniqueName
-     * @param bool   $throwException
+     * @param bool $throwException
      *
      * @return Configuration|null
      * @throws InvalidConfigException
@@ -320,12 +320,12 @@ class Repository extends Service implements RepositoryInterface
                 return null;
             }
         }
-        
+
         return $this->getFinder()->getConfiguration()[$uniqueName];
     }
-    
+
     private $_listGroupByCategory;
-    
+
     /**
      * 获取【所有|已安装】扩展不同分类的列表数据
      *
@@ -357,15 +357,15 @@ class Repository extends Service implements RepositoryInterface
                 }
             }
         }
-        
+
         return $this->_listGroupByCategory[$installed];
     }
-    
+
     /**
      * 判断指定扩展分类是否存在【未安装|已安装】的扩展
      *
-     * @param string $category  扩展分类
-     * @param bool   $installed 默认获取【已安装】的扩展分类下是否存在指定分类的扩展
+     * @param string $category 扩展分类
+     * @param bool $installed 默认获取【已安装】的扩展分类下是否存在指定分类的扩展
      *
      * @return bool
      */
@@ -373,7 +373,7 @@ class Repository extends Service implements RepositoryInterface
     {
         return isset($this->getListGroupByCategory($installed)[$category]);
     }
-    
+
     /**
      * 判断是否已经设置了扩展模型类
      *
@@ -386,5 +386,5 @@ class Repository extends Service implements RepositoryInterface
             && $this->service->getControllerRepository()->hasModel()
             && $this->service->getConfigRepository()->hasModel();
     }
-    
+
 }

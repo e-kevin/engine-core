@@ -1,8 +1,8 @@
 <?php
 /**
- * @link      https://github.com/e-kevin/engine-core
- * @copyright Copyright (c) 2020 E-Kevin
- * @license   BSD 3-Clause License
+ * @link https://github.com/e-kevin/engine-core
+ * @copyright Copyright (c) 2021 E-Kevin
+ * @license BSD 3-Clause License
  */
 
 declare(strict_types=1);
@@ -20,46 +20,46 @@ use Yii;
  */
 class Theme extends BaseExtensionModel implements ThemeModelInterface
 {
-    
+
     public static function tableName()
     {
         return '{{%viMJHk_theme}}';
     }
-    
+
     public function rules()
     {
         return array_merge(parent::rules(), [
             // theme_id rules
             'themeIdRequired' => ['theme_id', 'required'],
-            'themeIdLength'   => ['theme_id', 'string', 'max' => 15],
+            'themeIdLength' => ['theme_id', 'string', 'max' => 15],
             // uniqueId rules
-            'uniqueIdUnique'  => [
+            'uniqueIdUnique' => [
                 ['unique_name', 'app', 'theme_id']
                 , 'unique', 'targetAttribute' => ['unique_name', 'app', 'theme_id'],
             ],
         ]);
     }
-    
+
     public function attributeLabels()
     {
         return array_merge(parent::attributeLabels(), [
-            'theme_id' => Yii::t('ec/modules/extension', 'Theme Id'),
+            'theme_id' => Yii::t('ec/extension', 'Theme Id'),
         ]);
     }
-    
+
     /**
      * {@inheritdoc}
      */
     public function getActiveTheme($app = null)
     {
         return self::find()
-                   ->select(['unique_name'])
-                   ->where([
-                       'status' => StatusEnum::STATUS_ON,
-                       'app'    => $app ?: Yii::$app->id,
-                   ])->scalar();
+            ->select(['unique_name'])
+            ->where([
+                'status' => StatusEnum::STATUS_ON,
+                'app' => $app ?: Yii::$app->id,
+            ])->scalar();
     }
-    
+
     /**
      * {@inheritdoc}
      */
@@ -69,18 +69,14 @@ class Theme extends BaseExtensionModel implements ThemeModelInterface
             'status' => StatusEnum::STATUS_ON,
         ])->asArray()->indexBy('app')->all();
     }
-    
+
     /**
      * {@inheritdoc}
      */
     public function afterSave($insert, $changedAttributes)
     {
-        if ($insert) {
-            // 调用扩展内置安装方法
-            $this->getInfoInstance()->install();
-        }
         parent::afterSave($insert, $changedAttributes);
-    
+
         if ($insert || isset($changedAttributes['status'])) {
             // 清理缓存
             Ec::$service->getExtension()->getRepository()->clearCache();
@@ -90,5 +86,5 @@ class Theme extends BaseExtensionModel implements ThemeModelInterface
             Ec::$service->getExtension()->getEnvironment()->flushConfigFiles();
         }
     }
-    
+
 }

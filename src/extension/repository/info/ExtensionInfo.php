@@ -1,8 +1,8 @@
 <?php
 /**
- * @link      https://github.com/e-kevin/engine-core
- * @copyright Copyright (c) 2020 E-Kevin
- * @license   BSD 3-Clause License
+ * @link https://github.com/e-kevin/engine-core
+ * @copyright Copyright (c) 2021 E-Kevin
+ * @license BSD 3-Clause License
  */
 
 declare(strict_types=1);
@@ -13,7 +13,6 @@ use EngineCore\Ec;
 use EngineCore\extension\setting\SettingProviderInterface;
 use EngineCore\extension\repository\configuration\Configuration;
 use EngineCore\helpers\SecurityHelper;
-use Yii;
 use yii\base\BaseObject;
 use yii\base\InvalidConfigException;
 
@@ -414,7 +413,7 @@ class ExtensionInfo extends BaseObject
      */
     public function getMigrationTable(): string
     {
-        return '{{%migration}}';
+        return '{{%' . static::EXT_RAND_CODE . 'migration}}';
     }
     
     /**

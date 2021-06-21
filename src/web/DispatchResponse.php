@@ -1,7 +1,7 @@
 <?php
 /**
  * @link https://github.com/e-kevin/engine-core
- * @copyright Copyright (c) 2020 E-Kevin
+ * @copyright Copyright (c) 2021 E-Kevin
  * @license BSD 3-Clause License
  */
 
@@ -15,14 +15,14 @@ use yii\helpers\Url;
 /**
  * 调度响应器，用于更改反馈给WEB客户端的表现形式
  *
- * @property int   $waitSecond 页面跳转停留时间
+ * @property int $waitSecond 页面跳转停留时间
  * @property mixed $jumpUrl    页面跳转地址
  *
  * @author E-Kevin <e-kevin@qq.com>
  */
 class DispatchResponse extends \EngineCore\dispatch\DispatchResponse implements DispatchResponseInterface
 {
-    
+
     /**
      * @var string 需要渲染的视图文件，配置格式参见：
      * @see \yii\base\View::render() 的'$view'参数
@@ -31,7 +31,7 @@ class DispatchResponse extends \EngineCore\dispatch\DispatchResponse implements 
      * @see \EngineCore\dispatch\Generator::_setViewFile()
      */
     public $viewFile;
-    
+
     /**
      * {@inheritdoc}
      * @return \yii\web\Response
@@ -40,7 +40,7 @@ class DispatchResponse extends \EngineCore\dispatch\DispatchResponse implements 
     {
         return $this->dispatchJump($message ?: Yii::t('ec/app', 'Operation successful.'), $url, 1);
     }
-    
+
     /**
      * {@inheritdoc}
      * @return \yii\web\Response
@@ -49,17 +49,17 @@ class DispatchResponse extends \EngineCore\dispatch\DispatchResponse implements 
     {
         return $this->dispatchJump($message ?: Yii::t('ec/app', 'Operation failure.'), $url, 0);
     }
-    
+
     /**
      * 处理跳转操作，支持错误跳转和正确跳转。
      *
      * @param string|array $message 提示信息
-     * @param mixed        $url 跳转地址，该值设置遵照以下原则：
+     * @param mixed $url 跳转地址，该值设置遵照以下原则：
      *                              - string: 当为字符串时，则自动跳转到该地址。
      *                              - array: 数组形式的路由地址。
      *                              - 空值: 为空时('', [])则跳转到当前请求地址，即刷新当前页面。
      *                              - null: 不跳转。
-     * @param integer      $status 状态 1:success 0:error
+     * @param integer $status 状态 1:success 0:error
      *
      * @return \yii\web\Response 默认返回包含以下键名的数据到客户端
      * ```php
@@ -85,7 +85,7 @@ class DispatchResponse extends \EngineCore\dispatch\DispatchResponse implements 
         }
         $this->setAssign([
             'status' => $status,
-            'info'   => $message,
+            'info' => $message,
         ]);
         $errorService = Ec::$service->getSystem()->getError();
         // 全页面加载
@@ -116,21 +116,21 @@ class DispatchResponse extends \EngineCore\dispatch\DispatchResponse implements 
             $this->dispatch->controller->asJson($this->getAssign());
             Yii::$app->end();
         }
-        
+
         return Yii::$app->getResponse();
     }
-    
+
     /**
      * {@inheritdoc}
      */
     public function render($view = null, array $assign = [])
     {
-        return $this->setAssign($assign)->dispatch->controller->render(
-            $view ?: ($this->viewFile ?: $this->dispatch->id),
-            $this->getAssign()
-        );
+        $this->setAssign($assign);
+        $view = $view ?: ($this->viewFile ?: $this->dispatch->id);
+
+        return $this->dispatch->controller->render($view, $this->getAssign());
     }
-    
+
     /**
      * {@inheritdoc}
      */
@@ -138,7 +138,7 @@ class DispatchResponse extends \EngineCore\dispatch\DispatchResponse implements 
     {
         return $this->setAssign('waitSecond', intval($second));
     }
-    
+
     /**
      * {@inheritdoc}
      */
@@ -146,7 +146,7 @@ class DispatchResponse extends \EngineCore\dispatch\DispatchResponse implements 
     {
         return $this->getAssign('waitSecond');
     }
-    
+
     /**
      * 设置页面跳转地址，默认为`null`，即不跳转。
      * 该值设置遵照以下原则：
@@ -165,10 +165,10 @@ class DispatchResponse extends \EngineCore\dispatch\DispatchResponse implements 
         if (null !== $url && empty($url)) {
             $url = '';
         }
-        
+
         return $this->setAssign('jumpUrl', $url === null ? null : Url::to($url));
     }
-    
+
     /**
      * {@inheritdoc}
      */
@@ -176,5 +176,5 @@ class DispatchResponse extends \EngineCore\dispatch\DispatchResponse implements 
     {
         return $this->getAssign('jumpUrl');
     }
-    
+
 }

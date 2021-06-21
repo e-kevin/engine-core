@@ -1,8 +1,8 @@
 <?php
 /**
- * @link      https://github.com/e-kevin/engine-core
- * @copyright Copyright (c) 2020 E-Kevin
- * @license   BSD 3-Clause License
+ * @link https://github.com/e-kevin/engine-core
+ * @copyright Copyright (c) 2021 E-Kevin
+ * @license BSD 3-Clause License
  */
 
 declare(strict_types=1);
@@ -20,57 +20,53 @@ use yii\helpers\ArrayHelper;
  */
 class Controller extends BaseExtensionModel implements ControllerModelInterface
 {
-    
+
     public static function tableName()
     {
         return '{{%viMJHk_controller}}';
     }
-    
+
     public function rules()
     {
         return ArrayHelper::merge(parent::rules(), [
             // module_id rules
-            'moduleIdLength'       => ['module_id', 'string', 'max' => 15],
+            'moduleIdLength' => ['module_id', 'string', 'max' => 15],
             // controller_id rules
             'controllerIdRequired' => ['controller_id', 'required'],
-            'controllerIdLength'   => ['controller_id', 'string', 'max' => 15],
+            'controllerIdLength' => ['controller_id', 'string', 'max' => 15],
             // uniqueId rules
-            'uniqueIdUnique'       => [
+            'uniqueIdUnique' => [
                 ['unique_name', 'app', 'module_id', 'controller_id']
                 , 'unique', 'targetAttribute' => ['unique_name', 'app', 'module_id', 'controller_id'],
             ],
         ]);
     }
-    
+
     public function attributeLabels()
     {
         return array_merge(parent::attributeLabels(), [
-            'module_id'     => Yii::t('ec/modules/extension', 'Module Id'),
-            'controller_id' => Yii::t('ec/modules/extension', 'Controller Id'),
+            'module_id' => Yii::t('ec/extension', 'Module Id'),
+            'controller_id' => Yii::t('ec/extension', 'Controller Id'),
         ]);
     }
-    
+
     public function attributeHints()
     {
         return array_merge(parent::attributeHints(), [
-            'module_id' => Yii::t('ec/modules/extension',
+            'module_id' => Yii::t('ec/extension',
                 'When empty, the extension is `{app}` application extension.',
                 ['app' => Yii::$app->id]
             ),
         ]);
     }
-    
+
     /**
      * {@inheritdoc}
      */
     public function afterSave($insert, $changedAttributes)
     {
-        if ($insert) {
-            // 调用扩展内置安装方法
-            $this->getInfoInstance()->install();
-        }
         parent::afterSave($insert, $changedAttributes);
-        
+
         if ($insert || isset($changedAttributes['status']) || isset($changedAttributes['module_id']) || isset($changedAttributes['controller_id'])) {
             // 清理缓存
             Ec::$service->getExtension()->getRepository()->clearCache();
@@ -80,5 +76,5 @@ class Controller extends BaseExtensionModel implements ControllerModelInterface
             Ec::$service->getExtension()->getEnvironment()->flushConfigFiles();
         }
     }
-    
+
 }

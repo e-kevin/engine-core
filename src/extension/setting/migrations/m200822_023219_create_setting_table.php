@@ -1,39 +1,37 @@
 <?php
 /**
- * @link      https://github.com/e-kevin/engine-core
- * @copyright Copyright (c) 2020 E-Kevin
- * @license   BSD 3-Clause License
+ * @link https://github.com/e-kevin/engine-core
+ * @copyright Copyright (c) 2021 E-Kevin
+ * @license BSD 3-Clause License
  */
 
 use EngineCore\db\Migration;
 use EngineCore\Ec;
 use EngineCore\extension\setting\FileProvider;
+use EngineCore\extension\setting\SettingProviderInterface;
 
 class m200822_023219_create_setting_table extends Migration
 {
-    
+
     public function safeUp()
     {
-        $provider = Ec::$service->getSystem()->getSetting()->getProvider();
         $this->createTable($this->createTableNameWithCode('setting'), [
-            'id'                             => $this->primaryKey()->unsigned()->comment('ID'),
-            $provider->getNameField()        => $this->string(30)->unique()->notNull()->comment('标识'),
-            $provider->getTitleField()       => $this->string(20)->notNull()->comment('配置标题'),
-            $provider->getExtraField()       => $this->string(255)
-                                                     ->notNull()->defaultValue('')->comment('配置数据'),
-            $provider->getDescriptionField() => $this->string(255)
-                                                     ->notNull()->defaultValue('')->comment('配置说明'),
-            $provider->getValueField()       => $this->text()->notNull()->comment('默认值'),
-            $provider->getTypeField()        => $this->boolean()->unsigned()->notNull()->defaultValue($provider::TYPE_STRING)
-                                                     ->comment('设置类型'),
-            $provider->getCategoryField()    => $this->boolean()->unsigned()->notNull()->defaultValue($provider::CATEGORY_NONE)
-                                                     ->comment('设置分组'),
+            'id' => $this->primaryKey()->unsigned()->comment('ID'),
+            'name' => $this->string(30)->unique()->notNull()->comment(Yii::t('ec/setting', 'Name')),
+            'title' => $this->string(20)->notNull()->comment(Yii::t('ec/setting', 'Title')),
+            'extra' => $this->string(255)->notNull()->defaultValue('')->comment(Yii::t('ec/setting', 'Extra')),
+            'description' => $this->string(255)->notNull()->defaultValue('')->comment(Yii::t('ec/setting', 'Description')),
+            'value' => $this->text()->notNull()->comment(Yii::t('ec/setting', 'Value')),
+            'type' => $this->boolean()->unsigned()->notNull()
+                ->defaultValue(SettingProviderInterface::TYPE_STRING)->comment(Yii::t('ec/setting', 'Type')),
+            'category' => $this->boolean()->unsigned()->notNull()
+                ->defaultValue(SettingProviderInterface::CATEGORY_NONE)->comment(Yii::t('ec/setting', 'Category')),
         ], $this->tableOptions . $this->buildTableComment('系统设置表'));
-        
+
         // 转存数据
         $this->transferToDb();
     }
-    
+
     public function safeDown()
     {
         // 转存数据
@@ -47,7 +45,7 @@ class m200822_023219_create_setting_table extends Migration
             throw new \Exception('Failed to transfer configuration file.');
         }
     }
-    
+
     /**
      * 转存数据到数据库
      */
@@ -55,21 +53,21 @@ class m200822_023219_create_setting_table extends Migration
     {
         $provider = Ec::$service->getSystem()->getSetting()->getProvider();
         $data = [];
-        $fieldMap = $provider->getFieldMap();
+        $fields = $provider->getDefaultFields();
         foreach ($provider->getAll() as $row) {
             $arr = [];
             foreach ($row as $field => $value) {
                 // 只转存默认字段的数值
-                if (isset($fieldMap[$field])) {
-                    $arr[$fieldMap[$field]] = $value;
+                if (in_array($field, $fields)) {
+                    $arr[$field] = $value;
                 }
             }
             $data[] = $arr;
         }
-        
+
         $this->batchInsert($this->createTableNameWithCode('setting'), array_keys($data[0]), $data);
     }
-    
+
     /**
      * 转存数据到文件
      *
@@ -78,7 +76,7 @@ class m200822_023219_create_setting_table extends Migration
     protected function transferToFile(): bool
     {
         $config = [];
-        $fields = array_keys(Ec::$service->getSystem()->getSetting()->getProvider()->getFieldMap());
+        $fields = Ec::$service->getSystem()->getSetting()->getProvider()->getDefaultFields();
         $settings = Yii::getAlias(Ec::$service->getExtension()->getEnvironment()->settingFile);
         $settings = require("$settings");
         foreach (Ec::$service->getSystem()->getSetting()->getAll() as $key => $row) {
@@ -100,8 +98,8 @@ class m200822_023219_create_setting_table extends Migration
                 $config[$key] = $arr;
             }
         }
-        
+
         return Ec::$service->getExtension()->getEnvironment()->flushUserSettingFile($config);
     }
-    
+
 }

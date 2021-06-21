@@ -1,8 +1,8 @@
 <?php
 /**
- * @link      https://github.com/e-kevin/engine-core
- * @copyright Copyright (c) 2020 E-Kevin
- * @license   BSD 3-Clause License
+ * @link https://github.com/e-kevin/engine-core
+ * @copyright Copyright (c) 2021 E-Kevin
+ * @license BSD 3-Clause License
  */
 
 namespace EngineCore\dispatch;
@@ -28,7 +28,7 @@ class Dispatch extends Action
      * @var \EngineCore\web\Controller|\EngineCore\console\Controller
      */
     public $controller;
-    
+
     /**
      * {@inheritdoc}
      */

@@ -1,8 +1,8 @@
 <?php
 /**
- * @link      https://github.com/e-kevin/engine-core
- * @copyright Copyright (c) 2020 E-Kevin
- * @license   BSD 3-Clause License
+ * @link https://github.com/e-kevin/engine-core
+ * @copyright Copyright (c) 2021 E-Kevin
+ * @license BSD 3-Clause License
  */
 
 declare(strict_types=1);
@@ -19,7 +19,6 @@ use EngineCore\extension\repository\info\ModularityInfo;
 use EngineCore\helpers\FileHelper;
 use EngineCore\base\Service;
 use Yii;
-use yii\console\Application;
 use yii\helpers\VarDumper;
 
 /**
@@ -32,41 +31,41 @@ use yii\helpers\VarDumper;
  */
 class Environment extends Service
 {
-    
+
     /**
      * @var Extension 父级服务类
      */
     public $service;
-    
+
     /**
      * @var string 系统设置文件，文件方式存储系统设置数据或不同存储方式转换时使用，这通常是储存系统扩展配置里的数据
      * @see \EngineCore\extension\setting\FileProvider
      */
     public $settingFile = '@extensions/setting.php';
-    
+
     /**
      * @var string 菜单配置文件，文件方式存储菜单数据或不同存储方式转换时使用，这通常是储存系统扩展配置里的数据
      * @see \EngineCore\extension\menu\FileProvider
      */
     public $menuFile = '@extensions/menu.php';
-    
+
     /**
      * @var string 用户设置文件，文件方式存储系统设置数据，一般用户自定义的数据应在该文件里设置
      * @see \EngineCore\extension\setting\FileProvider
      */
     public $userSettingFile = '@common/config/setting.php';
-    
+
     /**
      * @var string 用户菜单文件，文件方式存储系统菜单数据，一般用户自定义的数据应在该文件里设置
      * @see \EngineCore\extension\menu\FileProvider
      */
     public $userMenuFile = '@common/config/menu.php';
-    
+
     /**
      * @var string 数据库配置文件
      */
     public $dbConfigFile = '@common/config/db-local.php';
-    
+
     /**
      * 刷新扩展配置文件
      *
@@ -102,10 +101,10 @@ class Environment extends Service
                 $files[$res ? 'success' : 'fail'][] = $file;
             }
         }
-        
+
         return $files;
     }
-    
+
     /**
      * 移除扩展配置文件
      *
@@ -120,10 +119,10 @@ class Environment extends Service
             $res = FileHelper::removeFile($file);
             $files[$res ? 'success' : 'fail'][] = $file;
         }
-        
+
         return $files;
     }
-    
+
     /**
      * 获取扩展配置文件路径列表数据
      *
@@ -136,14 +135,14 @@ class Environment extends Service
         foreach (AppEnum::list() as $app => $name) {
             $files[$app] = Yii::getAlias("@{$app}/config/extension.php");
         }
-        
+
         return array_merge($files, [
             'extension' => Yii::getAlias("@extensions/config.php"), // 扩展配置文件
-            'setting'   => Yii::getAlias($this->settingFile), // 系统设置文件
-            'menu'      => Yii::getAlias($this->menuFile), // 菜单配置文件
+            'setting' => Yii::getAlias($this->settingFile), // 系统设置文件
+            'menu' => Yii::getAlias($this->menuFile), // 菜单配置文件
         ]);
     }
-    
+
     /**
      * 获取扩展实际的配置数据
      *
@@ -177,38 +176,36 @@ class Environment extends Service
         if (empty($config)) {
             return [];
         }
-        
+
         $arr = [];
         $app = $infoInstance->getApp();
         $isGroup = (bool)array_intersect_key(AppEnum::list(), $config); // 是否采用应用分组配置方式
-        
         if ($isGroup) {
-            // 如果为公共扩展，则同时获取其他应用下的配置数据
-            if (AppEnum::COMMON === $app) {
-                /**
-                 * 排序数组，让'common'公共配置在前
-                 *
-                 * @param array $config
-                 *
-                 * @return array
-                 */
-                $sortFunc = function (array $config): array {
-                    $arr[AppEnum::COMMON] = ArrayHelper::remove($config, AppEnum::COMMON, []);
-                    
-                    return ArrayHelper::merge($arr, $config);
-                };
-                $arr = array_intersect_key($sortFunc($config), AppEnum::list());
-            } // 如果不是公共扩展，则只获取当前应用下的配置数据
-            else {
-                $arr[$app] = $config[$app] ?? [];
-            }
+            /**
+             * 排序数组，让'common'公共配置在前
+             *
+             * @param array $config
+             *
+             * @return array
+             */
+            $sortConfig = function (array $config): array {
+                $arr[AppEnum::COMMON] = ArrayHelper::remove($config, AppEnum::COMMON, []);
+
+                return ArrayHelper::merge($arr, $config);
+            };
+            $arr = array_intersect_key($sortConfig($config),
+                // 如果为公共扩展，则同时获取其他应用下的配置数据，否则只获取公共应用和当前应用
+                AppEnum::COMMON === $app
+                    ? AppEnum::list()
+                    : [$app => $app, AppEnum::COMMON => AppEnum::COMMON]
+            );
         } else {
             $arr[$app] = $config;
         }
-        
+
         return $arr;
     }
-    
+
     /**
      * 加载扩展实例的翻译文件配置
      *
@@ -227,7 +224,7 @@ class Environment extends Service
             Yii::$app->getI18n()->translations
         );
     }
-    
+
     /**
      * 生成扩展配置数据
      *
@@ -253,7 +250,6 @@ class Environment extends Service
         $localConfiguration = $this->service->getRepository()->getLocalConfiguration(); // 本地所有扩展的配置数据
         $installedExtension = $this->service->getRepository()->getInstalledExtension(); // 已安装扩展的数据库数据
         if (!empty($installedExtension)) {
-            $isConsoleApp = Yii::$app instanceof Application;
             foreach ($installedExtension as $uniqueName => $apps) {
                 $hasOne = false;
                 foreach ($apps as $app) {
@@ -267,9 +263,7 @@ class Environment extends Service
                         if (false === $hasOne) {
                             $hasOne = true;
                             // 加载翻译文件配置
-                            if ($isConsoleApp) {
-                                $this->loadTranslationConfig($infoInstance);
-                            }
+                            $this->loadTranslationConfig($infoInstance);
                             // 菜单数据
                             $config['menu'] = $infoInstance->getMenus();
                             // 系统设置数据
@@ -294,10 +288,10 @@ class Environment extends Service
         $configuration['extension'] = [
             'aliases' => $this->service->getRepository()->getFinder()->getAliases(),
         ];
-        
+
         return $configuration;
     }
-    
+
     /**
      * 获取和指定扩展实例有关的配置数据
      *
@@ -348,10 +342,10 @@ class Environment extends Service
                 // 应用配置数据
                 $configuration = $this->getConfig($infoInstance);
         }
-        
+
         return $configuration;
     }
-    
+
     /**
      * 刷新系统设置文件
      *
@@ -424,7 +418,7 @@ class Environment extends Service
  * ];
  * ```
  *
- * 注意：设置数组的键名可用值请参照 @see \\EngineCore\\extension\\setting\\SettingFieldTrait::\$_mapField 数组的键名。
+ * 注意：设置数组的键名可用值请查看 @see \\EngineCore\\extension\\setting\\SettingProviderTrait::getDefaultFields() 方法的返回值。
  *
  * 默认的设置数据可查看设置数据提供器的默认配置。
  * @see \\EngineCore\\extension\\setting\\SettingProviderTrait::getDefaultConfig()
@@ -433,10 +427,10 @@ class Environment extends Service
  */
  
 header;
-        
+
         return $this->generateConfigFile($config, $this->settingFile, $header);
     }
-    
+
     /**
      * 刷新用户设置文件
      *
@@ -462,10 +456,10 @@ header;
  */
  
 header;
-        
+
         return $this->generateConfigFile($config, $this->userSettingFile, $header);
     }
-    
+
     /**
      * 刷新数据库配置文件
      *
@@ -477,7 +471,7 @@ header;
     {
         return $this->generateConfigFile($config, $this->dbConfigFile);
     }
-    
+
     /**
      * 刷新菜单配置文件
      *
@@ -579,7 +573,7 @@ header;
  * ];
  * ```
  *
- * 注意：菜单数组的键名可用值请参照 @see \\EngineCore\\extension\\menu\\MenuFieldTrait::\$_mapField 接口里提供的属性方法。
+ * 注意：菜单数组的键名可用值请查看 @see \\EngineCore\\extension\\menu\\MenuProviderTrait::getDefaultFields() 方法的返回值。
  *
  * 默认的设置数据可查看设置数据提供器的默认配置。
  * @see \\EngineCore\\extension\\menu\\MenuProviderTrait::getDefaultConfig()
@@ -588,15 +582,15 @@ header;
  */
  
 header;
-        
+
         return $this->generateConfigFile($config, $this->menuFile, $header);
     }
-    
+
     /**
      * 在指定路径下生成系统配置文件
      *
-     * @param array  $config 待生成的配置数据
-     * @param string $path   待生成文件的路径，支持路径别名
+     * @param array $config 待生成的配置数据
+     * @param string $path 待生成文件的路径，支持路径别名
      * @param string $header 头部信息
      *
      * @return bool
@@ -610,8 +604,8 @@ return
 php;
         $content = sprintf($content, $header ?: '') . ' ';
         $content .= VarDumper::export($config) . ';';
-        
+
         return FileHelper::createFile(Yii::getAlias($path), $content, 0744);
     }
-    
+
 }

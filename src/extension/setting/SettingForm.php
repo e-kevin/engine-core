@@ -70,12 +70,10 @@ class SettingForm extends Model
 
         /** @var SettingModel $provider */
         $provider = Ec::$service->getSystem()->getSetting()->getProvider();
-        $this->models = $provider::find()->select(array_merge($provider->fields(), $provider->getFieldMap()))
-            ->where([
-                'status' => EnableEnum::ENABLE,
-                'category' => $this->category
-            ])
-            ->indexBy('name')->orderBy('order')->all();
+        $this->models = $provider::find()->where([
+            'status' => EnableEnum::ENABLE,
+            'category' => $this->category
+        ])->indexBy('name')->orderBy('order')->all();
         if (is_null($this->models)) {
             throw new NotFoundHttpException('The requested page does not exist.');
         }
@@ -88,19 +86,17 @@ class SettingForm extends Model
      */
     protected function initProperty()
     {
-        $fieldMap = Ec::$service->getSystem()->getSetting()->getProvider()->getFieldMap();
         foreach ($this->models as $model) {
             // 虚拟属性
-            $this->_property[$model->{$fieldMap['name']}] =
-                ($model->{$fieldMap['type']} == SettingModel::TYPE_CHECKBOX && $model->{$fieldMap['value']} !== '')
-                    ? explode(',', $model->{$fieldMap['value']})
-                    : $model->{$fieldMap['value']};
+            $this->_property[$model->name] = ($model->type == SettingModel::TYPE_CHECKBOX && $model->value !== '')
+                ? explode(',', $model->value)
+                : $model->value;
             // 虚拟标签
-            $this->_labels[$model->{$fieldMap['name']}] = $model->{$fieldMap['title']};
+            $this->_labels[$model->name] = $model->title;
             // 虚拟提示
-            $this->_hints[$model->{$fieldMap['name']}] = nl2br($model->{$fieldMap['description']});
-            if (!empty($model->{$fieldMap['rule']})) {
-                $val = $this->parseRulesToArray($model->{$fieldMap['rule']}, $model->{$fieldMap['name']});
+            $this->_hints[$model->name] = nl2br($model->description);
+            if (!empty($model->rule)) {
+                $val = $this->parseRulesToArray($model->rule, $model->name);
                 if (!empty($val)) {
                     $this->_rules = array_merge($this->_rules, $val);
                 }
@@ -169,11 +165,9 @@ class SettingForm extends Model
      */
     protected function formatSettingValue($model): string
     {
-        $fieldMap = Ec::$service->getSystem()->getSetting()->getProvider()->getFieldMap();
-
-        return is_array($this->_property[$model->{$fieldMap['name']}])
-            ? implode(',', $this->_property[$model->{$fieldMap['name']}])
-            : $this->_property[$model->{$fieldMap['name']}];
+        return is_array($this->_property[$model->name])
+            ? implode(',', $this->_property[$model->name])
+            : $this->_property[$model->name];
     }
 
     /**
@@ -186,10 +180,9 @@ class SettingForm extends Model
         if (!$this->validate()) {
             return false;
         }
-        $fieldMap = Ec::$service->getSystem()->getSetting()->getProvider()->getFieldMap();
         foreach ($this->models as $model) {
-            $model->{$fieldMap['value']} = $this->formatSettingValue($model);
-            if ($model->save(true, ['value', 'updated_at'])) {
+            $model->value = $this->formatSettingValue($model);
+            if ($model->save(true, ['value'])) {
                 continue;
             } else {
                 return false;

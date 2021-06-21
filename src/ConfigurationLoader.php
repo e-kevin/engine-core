@@ -1,8 +1,8 @@
 <?php
 /**
- * @link      https://github.com/e-kevin/engine-core
- * @copyright Copyright (c) 2020 E-Kevin
- * @license   BSD 3-Clause License
+ * @link https://github.com/e-kevin/engine-core
+ * @copyright Copyright (c) 2021 E-Kevin
+ * @license BSD 3-Clause License
  */
 
 declare(strict_types=1);
@@ -21,41 +21,42 @@ use yii\helpers\VarDumper;
  */
 class ConfigurationLoader
 {
-    
+
     /**
      * @var array 配置文件
      */
     private $_config = [];
-    
+
     /**
      * @var array 参数配置文件
      */
     private $_param = [];
-    
+
     /**
      * @var string 单配置文件
      */
     private $_singleConfigFile;
-    
+
     /**
      * @var bool 是否总是加载最新的配置数据
      */
     private $alwaysLoad;
-    
+
     /**
      * ConfigurationLoader constructor.
      *
      * @param string $singleConfigFile 单配置文件
-     * @param array  $bootstrap        启动配置文件
-     * @param array  $config           一般配置文件
-     * @param array  $param            参数配置文件
-     * @param mixed  $alwaysLoad       是否总是加载最新的配置数据
+     * @param array $bootstrap 启动配置文件
+     * @param array $config 一般配置文件
+     * @param array $param 参数配置文件
+     * @param mixed $alwaysLoad 是否总是加载最新的配置数据
      *
      * @author E-Kevin <e-kevin@qq.com>
      */
     public function __construct(
         string $singleConfigFile, array $bootstrap, array $config, array $param = [], $alwaysLoad = null
-    ) {
+    )
+    {
         foreach ($bootstrap as $file) {
             require("$file");
         }
@@ -71,7 +72,7 @@ class ConfigurationLoader
             $this->alwaysLoad = YII_ENV_DEV;
         }
     }
-    
+
     /**
      * 获取配置数据
      *
@@ -87,10 +88,10 @@ class ConfigurationLoader
         } else {
             $this->_config = require("$this->_singleConfigFile");
         }
-        
+
         return $this->_config;
     }
-    
+
     /**
      * 加载配置数据，包括主配置(`main`)数据和参数(`params`)配置数据
      *
@@ -133,10 +134,10 @@ class ConfigurationLoader
             $config['params'][MenuProviderInterface::MENU_KEY] = ArrayHelper::merge($config['params'][MenuProviderInterface::MENU_KEY] ?? [], $menus);
             $config['params'] = ArrayHelper::superMerge($config['params'], $params);
         }
-        
+
         return $config;
     }
-    
+
     /**
      * 在指定路径下生成系统配置文件
      *
@@ -153,16 +154,16 @@ return
 php;
         // todo 启用数据压缩
         $content .= ' ' . VarDumper::export($config) . ';';
-        
+
         return $this->createFile($this->_singleConfigFile, $content, 0744);
     }
-    
+
     /**
      * 创建文件
      *
      * @param string $filePath 文件路径
-     * @param mixed  $content  内容
-     * @param int    $mode     文件权限
+     * @param mixed $content 内容
+     * @param int $mode 文件权限
      *
      * @return bool
      */
@@ -172,11 +173,11 @@ php;
             if ($mode !== null) {
                 @chmod($filePath, $mode);
             }
-            
+
             return @touch($filePath);
         } else {
             return false;
         }
     }
-    
+
 }

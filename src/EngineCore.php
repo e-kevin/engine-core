@@ -1,8 +1,8 @@
 <?php
 /**
- * @link      https://github.com/e-kevin/engine-core
- * @copyright Copyright (c) 2020 E-Kevin
- * @license   BSD 3-Clause License
+ * @link https://github.com/e-kevin/engine-core
+ * @copyright Copyright (c) 2021 E-Kevin
+ * @license BSD 3-Clause License
  */
 
 declare(strict_types=1);
@@ -24,12 +24,12 @@ use yii\{
  */
 class EngineCore extends BaseObject
 {
-    
+
     /**
      * @var ServiceLocator 服务类实例，用于调用系统服务
      */
     public static $service;
-    
+
     /**
      * EngineCore 当前版本
      *
@@ -39,41 +39,41 @@ class EngineCore extends BaseObject
     {
         return '0.4';
     }
-    
+
     /**
      * EngineCore constructor.
      *
      * @param ServiceLocator $service
-     * @param array          $config
+     * @param array $config
      *
      * @author E-Kevin <e-kevin@qq.com>
      */
     public function __construct(ServiceLocator $service, $config = [])
     {
         static::$service = $service;
-        
+
         parent::__construct($config);
     }
-    
+
     /**
      * 输出调试信息
      *
      * @param string|array $var
-     * @param string       $category
+     * @param string $category
      */
     public static function traceInfo($var, $category = 'Ec::traceInfo')
     {
         Yii::debug(VarDumper::dumpAsString($var), $category);
     }
-    
+
     /**
      * 浏览器友好的变量输出
      *
-     * @param mixed   $arr            变量
-     * @param string  $getCalledClass 触发该方法的类名
-     * @param boolean $echo           是否输出 默认为True 如果为false 则返回输出字符串
-     * @param string  $label          标签 默认为空
-     * @param boolean $strict         是否严谨 默认为true
+     * @param mixed $arr 变量
+     * @param string $getCalledClass 触发该方法的类名
+     * @param boolean $echo 是否输出 默认为True 如果为false 则返回输出字符串
+     * @param string $label 标签 默认为空
+     * @param boolean $strict 是否严谨 默认为true
      *
      * @return string|void
      */
@@ -90,7 +90,7 @@ class EngineCore extends BaseObject
             }
         }
     }
-    
+
     /**
      * 支持抛出模型类（Model|ActiveRecord）验证错误的事务操作
      *
@@ -98,7 +98,7 @@ class EngineCore extends BaseObject
      * [[EngineCore\base\ExtendModelTrait()]]用以支持该方法
      * @see \EngineCore\base\ExtendModelTrait::afterValidate()
      *
-     * @param callable    $callback       a valid PHP callback that performs the job. Accepts connection instance as
+     * @param callable $callback a valid PHP callback that performs the job. Accepts connection instance as
      *                                    parameter.
      * @param string|null $isolationLevel The isolation level to use for this transaction.
      *
@@ -110,17 +110,17 @@ class EngineCore extends BaseObject
         self::setThrowException();
         $result = Yii::$app->getDb()->transaction($callback, $isolationLevel);
         self::setThrowException(false);
-        
+
         return $result;
     }
-    
+
     /**
      * 抛出异常，默认不抛出
      *
      * @var boolean
      */
     protected static $_throwException = false;
-    
+
     /**
      * 获取是否允许抛出异常
      *
@@ -130,7 +130,7 @@ class EngineCore extends BaseObject
     {
         return static::$_throwException;
     }
-    
+
     /**
      * 设置是否允许抛出异常，默认为`true`(允许)
      *
@@ -140,13 +140,13 @@ class EngineCore extends BaseObject
     {
         static::$_throwException = $throw;
     }
-    
+
     /**
      * 根据配置数据创建对象，可检测对象是否继承某个类或实现某个接口
      *
      * @param string|array|callable $type
-     * @param array                 $params    构造函数参数
-     * @param null                  $reference 检测对象是否继承某个类或实现某个接口
+     * @param array $params 构造函数参数
+     * @param null $reference 检测对象是否继承某个类或实现某个接口
      *
      * @return object
      * @throws InvalidConfigException
@@ -160,5 +160,5 @@ class EngineCore extends BaseObject
         $string = '`%s` class must extend from or implement `%s`.';
         throw new InvalidConfigException(sprintf($string, get_class($object), $reference));
     }
-    
+
 }

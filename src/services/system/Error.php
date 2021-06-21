@@ -1,8 +1,8 @@
 <?php
 /**
- * @link      https://github.com/e-kevin/engine-core
- * @copyright Copyright (c) 2020 E-Kevin
- * @license   BSD 3-Clause License
+ * @link https://github.com/e-kevin/engine-core
+ * @copyright Copyright (c) 2021 E-Kevin
+ * @license BSD 3-Clause License
  */
 
 declare(strict_types=1);
@@ -148,7 +148,7 @@ class Error extends Service
     }
     
     /**
-     * 添加模型其它错误信息
+     * 添加其它错误信息
      *
      * 通常情况下，模型错误信息储存在[[Model::$errors]]属性里，其它错误信息会习惯用闪存方式反馈给客户端，如：
      * ```php

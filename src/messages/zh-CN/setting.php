@@ -1,8 +1,8 @@
 <?php
 /**
- * @link      https://github.com/e-kevin/engine-core
- * @copyright Copyright (c) 2020 E-Kevin
- * @license   BSD 3-Clause License
+ * @link https://github.com/e-kevin/engine-core
+ * @copyright Copyright (c) 2021 E-Kevin
+ * @license BSD 3-Clause License
  */
 
 return [
@@ -10,7 +10,7 @@ return [
     'Name' => '标识',
     'Title' => '标题',
     'Extra' => '额外数据',
-    'Description' => '描述',
+    'Description' => '设置说明',
     'Value' => '默认值',
     'Type' => '类型',
     'Category' => '分组',
@@ -24,11 +24,11 @@ return [
         '逗号 ,',
         'key:value, key1:value1, key2:value2',
         '分号 ;',
-        'key:value; key1:value1; key2:value',
+        'key:value; key1:value1; key2:value2',
         '换行',
         'key:value',
         'key1:value1',
-        'key2:value',
+        'key2:value2',
     ]),
     'The system will analyze the configuration data according to different types.' => '系统会根据不同类型解析设置数据',
     'Settings without grouping will not appear in system settings.' => '没有分组的设置不会显示在系统设置中',

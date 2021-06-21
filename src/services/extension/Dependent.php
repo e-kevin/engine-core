@@ -1,8 +1,8 @@
 <?php
 /**
- * @link      https://github.com/e-kevin/engine-core
- * @copyright Copyright (c) 2020 E-Kevin
- * @license   BSD 3-Clause License
+ * @link https://github.com/e-kevin/engine-core
+ * @copyright Copyright (c) 2021 E-Kevin
+ * @license BSD 3-Clause License
  */
 
 namespace EngineCore\services\extension;
@@ -22,12 +22,12 @@ use Yii;
  */
 class Dependent extends Service
 {
-    
+
     /**
      * @var Extension 父级服务类
      */
     public $service;
-    
+
     /**
      * {@inheritdoc}
      */
@@ -35,12 +35,12 @@ class Dependent extends Service
     {
         $this->_definitions = null;
     }
-    
+
     /**
      * @var array 本地所有扩展依赖定义
      */
     private $_definitions;
-    
+
     /**
      * 获取本地所有扩展依赖定义
      *
@@ -54,24 +54,24 @@ class Dependent extends Service
             $configuration = $this->service->getRepository()->getFinder()->getConfiguration();
             foreach ($configuration as $config) {
                 $definition = [
-                    'name'                  => $config->getName(),
-                    'version'               => $config->getVersion(),
-                    'description'           => $config->getDescription(),
-                    'app'                   => $config->getApp(),
+                    'name' => $config->getName(),
+                    'version' => $config->getVersion(),
+                    'description' => $config->getDescription(),
+                    'app' => $config->getApp(),
                     'extensionDependencies' => [],
-                    'composerDependencies'  => [],
+                    'composerDependencies' => [],
                 ];
                 // 扩展依赖关系
                 foreach ($config->getExtensionDependencies() as $app => $v) {
                     foreach ($v as $uniqueName => $row) {
                         $arr = [
-                            'name'           => $uniqueName,
-                            'description'    => 'N/A',
-                            'localVersion'   => 'N/A',
+                            'name' => $uniqueName,
+                            'description' => 'N/A',
+                            'localVersion' => 'N/A',
                             'requireVersion' => $row['version'],
-                            'requireApp'     => $row['app'],
-                            'downloaded'     => false,
-                            'installed'      => false,
+                            'requireApp' => $row['app'],
+                            'downloaded' => false,
+                            'installed' => false,
                         ];
                         // 本地存在扩展
                         if (isset($configuration[$uniqueName])) {
@@ -82,11 +82,11 @@ class Dependent extends Service
                             /*
                              * 为数组时，则要求在多个应用里必须安装所依赖的扩展，如：
                              * [
-                             *  "engine-core/theme-bootstrap-v3" => [
+                             *  "engine-core/theme-basic" => [
                              *      'app' => ['backend', 'frontend']
                              *  ]
                              * ]
-                             * 表示在'backend'和'frontend'应用里必须安装"engine-core/theme-bootstrap-v3"扩展
+                             * 表示在'backend'和'frontend'应用里必须安装"engine-core/theme-basic"扩展
                              */
                             foreach ((array)$row['app'] as $requireApp) {
                                 // 验证所请求的应用是否有效，无效则过滤该依赖
@@ -104,11 +104,11 @@ class Dependent extends Service
                 // composer依赖关系
                 foreach ($config->getComposerDependencies() as $uniqueName => $version) {
                     $arr = [
-                        'name'           => $uniqueName,
-                        'description'    => 'N/A',
-                        'localVersion'   => 'N/A',
+                        'name' => $uniqueName,
+                        'description' => 'N/A',
+                        'localVersion' => 'N/A',
                         'requireVersion' => $version,
-                        'installed'      => false,
+                        'installed' => false,
                     ];
                     if (isset($composerList[$uniqueName])) {
                         $arr['localVersion'] = $composerList[$uniqueName]['version'];
@@ -117,14 +117,14 @@ class Dependent extends Service
                     }
                     $definition['composerDependencies'][$uniqueName] = $arr;
                 }
-                
+
                 $this->_definitions[$config->getName()] = $definition;
             }
         }
-        
+
         return $this->_definitions;
     }
-    
+
     /**
      * 标准化扩展数据
      *
@@ -146,7 +146,7 @@ class Dependent extends Service
             if (is_string($row)) {
                 $row = [
                     'version' => $row,
-                    'app'     => [],
+                    'app' => [],
                 ];
             } else {
                 $row['version'] = $row['version'] ?? '*';
@@ -156,87 +156,95 @@ class Dependent extends Service
                 }
             }
         }
-        
+
         return $extensions;
     }
-    
+
     /**
      * 检测指定应用下指定扩展是否满足所需的依赖关系
      *
      * @param string $uniqueName 扩展名称
-     * @param string $app        应用ID
+     * @param string $app 应用ID
+     * @param bool $verifyInstalled 验证扩展依赖关系是否已经安装
      *
      * @return bool
      */
-    public function checkDependencies(string $uniqueName, $app = null): bool
+    public function checkDependencies(string $uniqueName, $app = null, $verifyInstalled = false): bool
     {
         if (!isset($this->service->getRepository()->getFinder()->getConfiguration()[$uniqueName])) {
             $this->_info = "不存在扩展：`{$uniqueName}`";
-            
+
             return $this->_status = false;
         }
-        
+
         $app = $app ?: Yii::$app->id;
         $configuration = $this->service->getRepository()->getFinder()->getConfiguration()[$uniqueName];
         if (!in_array($app, $configuration->getApp())) {
             $this->_info = $uniqueName . '扩展无法在`' . $app . '`应用里安装。';
-            
+
             return $this->_status = false;
         }
-        if (false === $this->validate($configuration->getExtensionDependencies()[$app] ?? [])) {
+        if (false === $this->validate(
+                $configuration->getExtensionDependencies()[$app] ?? [],
+                false,
+                [$uniqueName],
+                $verifyInstalled
+            )
+        ) {
             $this->_info = '请先满足扩展依赖关系再执行当前操作。';
             $this->_data['download'] = $this->getDownload();
             $this->_data['circular'] = $this->getCircular();
             $this->_data['conflict'] = $this->getConflict();
+            $this->_data['uninstall'] = $this->getUninstall();
             $this->_status = false;
         }
-        
+
         return $this->_status;
     }
-    
+
     /**
      * 验证扩展数据是否通过依赖检测
      *
      * @param array $extensions 扩展数据
-     *
      * @see normalize()
      * ```php
      * [
-     *  'engine-core/theme-bootstrap-v3' => [
-     *      'version' => '*',
-     *      'app' => 'backend', // ['backend', 'frontend']
-     *  ]
+     *      'engine-core/theme-basic' => [
+     *          'version' => '*',
+     *          'app' => 'backend', // ['backend', 'frontend']
+     *      ]
      * ]
      * ```
      *
-     * @param bool  $debug      是否开启调试，显示调试数据， 默认不开启
-     * @param array $parent     父级扩展名称
+     * @param bool $debug 是否开启调试，显示调试数据， 默认不开启
+     * @param array $parent 父级扩展名称
+     * @param bool $verifyInstalled 验证扩展依赖关系是否已经安装
      *
      * @return bool
      */
-    public function validate(array $extensions, $debug = false, array $parent = []): bool
+    public function validate(array $extensions, $debug = false, array $parent = [], $verifyInstalled = false): bool
     {
         $this->_data['checked'] = [];
-        $extensions = $this->checkParent($this->normalize($extensions), $parent);
+        $extensions = $this->_checkParent($this->normalize($extensions), $parent, $verifyInstalled);
         $configuration = $this->service->getRepository()->getFinder()->getConfiguration();
         /**
          * 生成已经通过检测的扩展数据
          *
          * @param Configuration $config
-         * @param array         $data
-         * @param string        $app
+         * @param array $data
+         * @param string $app
          */
         $debugFunc = function (Configuration $config, array $data, string $app) {
             $uniqueName = $config->getName();
             $this->_data['checked'][$uniqueName]['version'] = $config->getVersion();
             $this->_data['checked'][$uniqueName]['app'][$app] = $app;
             $this->_data['checked'][$uniqueName]['items'][] = [
-                'app'            => $app,
+                'app' => $app,
                 'requireVersion' => $data['version'],
-                'extensions'     => $data['parent'],
+                'extensions' => $data['parent'],
             ];
         };
-        
+
         while (!empty($extensions)) {
             $ext = [];
             $break = false; // 扩展依赖关系未满足，则终止后续检测
@@ -245,7 +253,11 @@ class Dependent extends Service
                 foreach ($row['app'] as $app) {
                     // 存在次级依赖扩展
                     if (isset($config->getExtensionDependencies()[$app])) {
-                        $arr = $this->checkParent($config->getExtensionDependencies()[$app], array_merge($row['parent'], [$uniqueName]));
+                        $arr = $this->_checkParent(
+                            $config->getExtensionDependencies()[$app],
+                            array_merge($row['parent'], [$uniqueName]),
+                            $verifyInstalled
+                        );
                         $break = empty($arr);
                         if (!$break) {
                             $ext = array_merge($ext, $arr);
@@ -263,35 +275,37 @@ class Dependent extends Service
             }
             $extensions = $ext;
         }
-        
+
         $this->_passed = $this->sort($this->_data['checked']);
-        
+
         if (!$debug) {
             unset($this->_data['circular_tmp'], $this->_data['checked']);
         }
-        
+
         if (
             !empty($this->getDownload())
             || !empty($this->getConflict())
             || !empty($this->getCircular())
+            || !empty($this->getUninstall())
         ) {
             $this->_status = false;
         } else {
             $this->_status = true;
         }
-        
+
         return $this->_status;
     }
-    
+
     /**
-     * 检测父级扩展是否满足依赖关系，即是否存在【未下载、版本冲突或无限循环】等问题
+     * 检测父级扩展是否满足依赖关系，即是否存在【未下载、版本冲突、未安装或无限循环】等问题
      *
      * @param array $extensions
      * @param array $parent
+     * @param bool $verifyInstalled 验证扩展依赖关系是否已经安装
      *
      * @return array 返回满足依赖关系的扩展数组
      */
-    private function checkParent(array $extensions, array $parent = []): array
+    private function _checkParent(array $extensions, array $parent = [], $verifyInstalled = false): array
     {
         $configuration = $this->service->getRepository()->getFinder()->getConfiguration();
         $total = count($extensions);
@@ -300,21 +314,27 @@ class Dependent extends Service
          * 检测扩展合法性
          *
          * @param Configuration $config
-         * @param array         $data
-         * @param array         $extensions
-         *
-         * @internal param string $requireVersion
-         * @internal param array $parent
+         * @param array $data
+         * @param array $extensions
          */
-        $checker = function (Configuration $config, array $data, array &$extensions) {
+        $checker = function (Configuration $config, array $data, array &$extensions) use ($verifyInstalled) {
             $parent = $data['parent'];
             $requireVersion = $data['version'];
             $uniqueName = $config->getName();
+            // 验证扩展是否已经安装
+            if ($verifyInstalled) {
+                foreach ($data['app'] as $app) {
+                    if (!isset($this->service->getRepository()->getDbConfiguration()[$app][$uniqueName])) {
+                        $this->_uninstall[$uniqueName][] = $app;
+                        unset($extensions[$uniqueName]);
+                    }
+                }
+            }
             // 版本不符合则提示需要解决版本冲突
             if (!Ec::$service->getSystem()->getVersion()->compare($config->getVersion(), $requireVersion)) {
                 $this->_conflict[$uniqueName]['localVersion'] = $config->getVersion();
                 $this->_conflict[$uniqueName]['items'][] = [
-                    'extensions'     => $parent,
+                    'extensions' => $parent,
                     'requireVersion' => $requireVersion,
                 ];
                 unset($extensions[$uniqueName]);
@@ -333,7 +353,7 @@ class Dependent extends Service
                 }
             }
         };
-        
+
         foreach ($extensions as $uniqueName => &$row) {
             $row['parent'] = $parent;
             // 本地存在扩展
@@ -349,26 +369,26 @@ class Dependent extends Service
             } // 本地不存在扩展
             else {
                 $this->_download[$uniqueName][] = [
-                    'extensions'     => $parent,
+                    'extensions' => $parent,
                     'requireVersion' => $row['version'],
                 ];
                 unset($extensions[$uniqueName]);
             }
         }
-        
+
         return !$rootLevel && ($total != count($extensions))
-            // 非顶级的父级扩展所依赖的子级扩展没有解决依赖关系（冲突、不存在或无限循环），则中断该扩展的后续检测
+            // 非顶级的父级扩展所依赖的子级扩展没有解决依赖关系（冲突、不存在、未安装或无限循环），则中断该扩展的后续检测
             ? []
             : $extensions;
     }
-    
+
     /**
      * 按照底层依赖关系排序扩展，确保被依赖的扩展在前
      *
      * @param array $extensions
      *                   ```php
      *                   [
-     *                   'engine-core/theme-bootstrap-v3' => [
+     *                   'engine-core/theme-basic' => [
      *                   'app' => ['backend']
      *                   ]
      *                   ]
@@ -381,7 +401,7 @@ class Dependent extends Service
      *      'engine-core/config-system' => [
      *          'app' => ['common']
      *      ],
-     *      'engine-core/theme-bootstrap-v3' => [
+     *      'engine-core/theme-basic' => [
      *          'app' => ['backend']
      *      ]
      * ]
@@ -391,7 +411,7 @@ class Dependent extends Service
     {
         $data = [];
         $configuration = $this->service->getRepository()->getFinder()->getConfiguration();
-        
+
         foreach ($extensions as $uniqueName => $row) {
             $config = $configuration[$uniqueName];
             foreach ($row['app'] as $app) {
@@ -410,15 +430,15 @@ class Dependent extends Service
                 }
             }
         }
-        
+
         return $data;
     }
-    
+
     /**
      * @var array 需要下载的扩展
      */
     private $_download = [];
-    
+
     /**
      * 获取需要下载的扩展
      *
@@ -428,12 +448,12 @@ class Dependent extends Service
     {
         return $this->_download;
     }
-    
+
     /**
      * @var array 存在版本冲突的扩展
      */
     private $_conflict = [];
-    
+
     /**
      * 获取存在版本冲突的扩展
      *
@@ -443,12 +463,12 @@ class Dependent extends Service
     {
         return $this->_conflict;
     }
-    
+
     /**
      * @var array 无限循环依赖的扩展
      */
     private $_circular = [];
-    
+
     /**
      * 获取无限循环依赖的扩展
      *
@@ -458,12 +478,12 @@ class Dependent extends Service
     {
         return $this->_circular;
     }
-    
+
     /**
      * @var array 通过依赖检测的扩展
      */
     private $_passed = [];
-    
+
     /**
      * 获取通过依赖检测的扩展
      *
@@ -475,5 +495,20 @@ class Dependent extends Service
     {
         return $this->_passed;
     }
-    
+
+    /**
+     * @var array 未安装的扩展
+     */
+    private $_uninstall = [];
+
+    /**
+     * 获取未安装的扩展
+     *
+     * @return array
+     */
+    public function getUninstall(): array
+    {
+        return $this->_uninstall;
+    }
+
 }
