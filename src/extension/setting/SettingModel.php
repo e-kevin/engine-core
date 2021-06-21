@@ -28,6 +28,7 @@ use Yii;
  * @property string $description 设置描述的数据库字段名
  * @property string $type 设置类型的数据库字段名
  * @property string $category 设置分组的数据库字段名
+ * @property string $rule 验证规则的数据库字段名
  * ====== 默认字段
  *
  * @author E-Kevin <e-kevin@qq.com>
@@ -62,6 +63,9 @@ class SettingModel extends ActiveRecord implements SettingProviderInterface
             'extraLength' => ['extra', 'string', 'max' => 255],
             // description rules
             'descriptionLength' => ['description', 'string', 'max' => 255],
+            // rule rules
+            'ruleRequired' => ['rule', 'required'],
+            'ruleLength' => ['rule', 'string', 'max' => 500],
             // other rules
             'otherString' => ['value', 'string'],
             'otherInteger' => [['type', 'category'], 'integer'],
@@ -82,6 +86,7 @@ class SettingModel extends ActiveRecord implements SettingProviderInterface
             'value' => Yii::t('ec/setting', 'Value'),
             'type' => Yii::t('ec/setting', 'Type'),
             'category' => Yii::t('ec/setting', 'Category'),
+            'rule' => Yii::t('ec/setting', 'Rule'),
         ];
     }
 
@@ -98,6 +103,7 @@ class SettingModel extends ActiveRecord implements SettingProviderInterface
             'extra' => Yii::t('ec/setting', 'This item needs to be configured for the type of select, radio and checkbox.'),
             'type' => Yii::t('ec/setting', 'The system will analyze the configuration data according to different types.'),
             'category' => Yii::t('ec/setting', 'Settings without grouping will not appear in system settings.'),
+            'rule' => Yii::t('ec/setting', 'Set validation rules. Many rules are signed in english ; or newline separation.'),
         ];
     }
 

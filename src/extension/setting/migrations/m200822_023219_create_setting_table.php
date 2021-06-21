@@ -26,6 +26,7 @@ class m200822_023219_create_setting_table extends Migration
                 ->defaultValue(SettingProviderInterface::TYPE_STRING)->comment(Yii::t('ec/setting', 'Type')),
             'category' => $this->boolean()->unsigned()->notNull()
                 ->defaultValue(SettingProviderInterface::CATEGORY_NONE)->comment(Yii::t('ec/setting', 'Category')),
+            'rule' => $this->string(500)->notNull()->defaultValue('required')->comment('验证规则'),
         ], $this->tableOptions . $this->buildTableComment('系统设置表'));
 
         // 转存数据

@@ -99,6 +99,7 @@ interface SettingProviderInterface extends DataCacheInterface
      *          'description' => '网站名称',
      *          'type'        => SettingProviderInterface::TYPE_STRING,
      *          'category'    => SettingProviderInterface::CATEGORY_BASE,
+     *          'rule'        => 'required',
      *      ],
      *      ...,
      * ]
@@ -121,6 +122,7 @@ interface SettingProviderInterface extends DataCacheInterface
      *          'description' => '网站名称',
      *          'type'        => SettingProviderInterface::TYPE_STRING,
      *          'category'    => SettingProviderInterface::CATEGORY_BASE,
+     *          'rule'        => 'required',
      *      ],
      *      ...,
      * ]

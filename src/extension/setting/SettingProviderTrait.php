@@ -38,6 +38,7 @@ trait SettingProviderTrait
      *          'description' => '网站名称',
      *          'type'        => SettingProviderInterface::TYPE_STRING,
      *          'category'    => SettingProviderInterface::CATEGORY_BASE,
+     *          'rule'        => 'required',
      *      ],
      *      ...,
      * ]
@@ -79,6 +80,7 @@ trait SettingProviderTrait
                 'description' => '网站名称',
                 'type' => SettingProviderInterface::TYPE_STRING,
                 'category' => SettingProviderInterface::CATEGORY_BASE,
+                'rule' => 'required,string,max:15'
             ],
             SettingProviderInterface::SITE_DESCRIPTION => [
                 'name' => SettingProviderInterface::SITE_DESCRIPTION,
@@ -88,6 +90,7 @@ trait SettingProviderTrait
                 'description' => '网站描述',
                 'type' => SettingProviderInterface::TYPE_STRING,
                 'category' => SettingProviderInterface::CATEGORY_BASE,
+                'rule' => 'string,max:60'
             ],
             SettingProviderInterface::SITE_KEYWORD => [
                 'name' => SettingProviderInterface::SITE_KEYWORD,
@@ -97,6 +100,7 @@ trait SettingProviderTrait
                 'description' => '搜索引擎关键词',
                 'type' => SettingProviderInterface::TYPE_STRING,
                 'category' => SettingProviderInterface::CATEGORY_BASE,
+                'rule' => 'string,max:60'
             ],
             SettingProviderInterface::SITE_ICP => [
                 'name' => SettingProviderInterface::SITE_ICP,
@@ -106,6 +110,7 @@ trait SettingProviderTrait
                 'description' => '网站备案号，如：沪ICP备12345678号-9',
                 'type' => SettingProviderInterface::TYPE_STRING,
                 'category' => SettingProviderInterface::CATEGORY_BASE,
+                'rule' => 'string'
             ],
             SettingProviderInterface::CONFIG_TYPE_LIST => [
                 'name' => SettingProviderInterface::CONFIG_TYPE_LIST,
@@ -115,6 +120,7 @@ trait SettingProviderTrait
                 'description' => '主要用于数据解析和页面表单项的生成',
                 'type' => SettingProviderInterface::TYPE_SELECT,
                 'category' => SettingProviderInterface::CATEGORY_NONE,
+                'rule' => 'required'
             ],
             SettingProviderInterface::CONFIG_GROUP_LIST => [
                 'name' => SettingProviderInterface::CONFIG_GROUP_LIST,
@@ -124,6 +130,7 @@ trait SettingProviderTrait
                 'description' => '设置分组',
                 'type' => SettingProviderInterface::TYPE_SELECT,
                 'category' => SettingProviderInterface::CATEGORY_NONE,
+                'rule' => 'required'
             ],
             SettingProviderInterface::DEFAULT_THEME => [
                 'name' => SettingProviderInterface::DEFAULT_THEME,
@@ -133,6 +140,7 @@ trait SettingProviderTrait
                 'description' => '如果启用主题功能，在获取不到主题相关的视图文件或调度器时，将在默认主题里搜索相关资源',
                 'type' => SettingProviderInterface::TYPE_SELECT,
                 'category' => SettingProviderInterface::CATEGORY_NONE,
+                'rule' => 'required'
             ],
             SettingProviderInterface::ENABLE_THEME => [
                 'name' => SettingProviderInterface::ENABLE_THEME,
@@ -142,6 +150,7 @@ trait SettingProviderTrait
                 'description' => '关闭多主题功能后，系统将会在默认主题里获取相关的视图文件和调度器',
                 'type' => SettingProviderInterface::TYPE_RADIO,
                 'category' => SettingProviderInterface::CATEGORY_NONE,
+                'rule' => 'required,integer'
             ],
             SettingProviderInterface::STRICT_THEME => [
                 'name' => SettingProviderInterface::STRICT_THEME,
@@ -151,6 +160,7 @@ trait SettingProviderTrait
                 'description' => '如果开启主题严谨模式，则调度器会优先在主题目录下获取需要的视图文件，否则从`views`目录里获取',
                 'type' => SettingProviderInterface::TYPE_RADIO,
                 'category' => SettingProviderInterface::CATEGORY_NONE,
+                'rule' => 'required,integer'
             ],
         ];
     }
@@ -171,7 +181,8 @@ trait SettingProviderTrait
             'title',
             'description',
             'type',
-            'category'
+            'category',
+            'rule'
         ];
     }
 

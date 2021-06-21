@@ -70,10 +70,11 @@ class ExtensionInfo extends BaseObject
         CATEGORY_EXTENSION = 2, // 扩展管理分类
         CATEGORY_INSTALLATION = 3, // 安装向导分类
         CATEGORY_MENU = 4, // 菜单分类
-        CATEGORY_ACCOUNT = 5, // 用户分类
-        CATEGORY_PASSPORT = 6, // 通行证分类
+        CATEGORY_USER = 5, // 用户分类
+        CATEGORY_ACCOUNT = 5, // 账户分类
         CATEGORY_SECURITY = 7, // 安全分类
-        CATEGORY_BACKEND_HOME = 8; // 后台主页分类
+        CATEGORY_PASSPORT = 8, // 通行证分类
+        CATEGORY_BACKEND_HOME = 9; // 后台主页分类
     
     /**
      * @var array 必须设置的属性值
